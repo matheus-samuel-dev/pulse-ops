@@ -1,0 +1,126 @@
+name: Deploy · AWS EC2
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pulseops-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy successful main build
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_DEPLOY_PATH: ${{ secrets.EC2_DEPLOY_PATH }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_EXPIRATION_SECONDS: ${{ vars.JWT_EXPIRATION_SECONDS || '3600' }}
+      JWT_ISSUER: ${{ vars.JWT_ISSUER || 'pulseops' }}
+      CORS_ALLOWED_ORIGINS: ${{ vars.CORS_ALLOWED_ORIGINS }}
+      FRONTEND_PORT: ${{ vars.FRONTEND_PORT || '3000' }}
+      BACKEND_PORT: ${{ vars.BACKEND_PORT || '8080' }}
+      POSTGRES_PORT: ${{ vars.POSTGRES_PORT || '5433' }}
+      RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Checkout the exact verified revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Validate deployment inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EC2_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$EC2_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$EC2_DEPLOY_PATH" =~ ^/(opt|srv|var/www)/[A-Za-z0-9._/-]+$ || "$EC2_DEPLOY_PATH" =~ ^/home/[a-z_][a-z0-9_-]*/[A-Za-z0-9._/-]+$ ]]
+          [[ "$EC2_DEPLOY_PATH" != *".."* && "$EC2_DEPLOY_PATH" != *"//"* ]]
+          [[ "$POSTGRES_DB" =~ ^[A-Za-z0-9_-]+$ ]]
+          [[ "$POSTGRES_USER" =~ ^[A-Za-z0-9_-]+$ ]]
+          [[ "$POSTGRES_PASSWORD" =~ ^[A-Za-z0-9._~!@%+=,-]{16,}$ ]]
+          [[ "$JWT_SECRET" =~ ^[A-Za-z0-9._~!@%+/=-]+$ ]]
+          test "${#JWT_SECRET}" -ge 32
+          [[ "$CORS_ALLOWED_ORIGINS" =~ ^[A-Za-z0-9:/.,*_-]+$ ]]
+
+      - name: Configure verified SSH host identity
+        shell: bash
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_SSH_KNOWN_HOSTS: ${{ secrets.EC2_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$EC2_SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$EC2_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: Package the verified application
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar \
+            --exclude=.git \
+            --exclude=.env \
+            --exclude='*/node_modules' \
+            --exclude='*/target' \
+            --exclude='*/dist' \
+            -czf "pulseops-${RELEASE_SHA}.tgz" .
+
+      - name: Create production environment file
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          {
+            printf 'POSTGRES_DB=%s\n' "$POSTGRES_DB"
+            printf 'POSTGRES_USER=%s\n' "$POSTGRES_USER"
+            printf 'POSTGRES_PASSWORD=%s\n' "$POSTGRES_PASSWORD"
+            printf 'POSTGRES_PORT=%s\n' "$POSTGRES_PORT"
+            printf 'BACKEND_PORT=%s\n' "$BACKEND_PORT"
+            printf 'FRONTEND_PORT=%s\n' "$FRONTEND_PORT"
+            printf 'SPRING_PROFILES_ACTIVE=prod\n'
+            printf 'JWT_SECRET=%s\n' "$JWT_SECRET"
+            printf 'JWT_EXPIRATION_SECONDS=%s\n' "$JWT_EXPIRATION_SECONDS"
+            printf 'JWT_ISSUER=%s\n' "$JWT_ISSUER"
+            printf 'CORS_ALLOWED_ORIGINS=%s\n' "$CORS_ALLOWED_ORIGINS"
+            printf 'MONITORING_ALLOW_PRIVATE_NETWORKS=false\n'
+          } > pulseops.production.env
+
+      - name: Transfer release to EC2
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="$EC2_USER@$EC2_HOST"
+          ssh "$remote" "mkdir -p '$EC2_DEPLOY_PATH'"
+          scp "pulseops-${RELEASE_SHA}.tgz" "$remote:/tmp/pulseops-${RELEASE_SHA}.tgz"
+          scp pulseops.production.env "$remote:/tmp/pulseops-${RELEASE_SHA}.env"
+
+      - name: Activate release and verify containers
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="$EC2_USER@$EC2_HOST"
+          ssh "$remote" \
+            "set -euo pipefail; \
+             tar -xzf '/tmp/pulseops-${RELEASE_SHA}.tgz' -C '$EC2_DEPLOY_PATH'; \
+             install -m 600 '/tmp/pulseops-${RELEASE_SHA}.env' '$EC2_DEPLOY_PATH/.env'; \
+             cd '$EC2_DEPLOY_PATH'; \
+             docker compose up -d --build --remove-orphans --wait --wait-timeout 180; \
+             docker compose ps; \
+             rm -f '/tmp/pulseops-${RELEASE_SHA}.tgz' '/tmp/pulseops-${RELEASE_SHA}.env'"

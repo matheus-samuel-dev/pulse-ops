@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:postgresql://localhost:5432/pulseops_test}
+    username: ${TEST_DB_USERNAME:pulseops}
+    password: ${TEST_DB_PASSWORD:pulseops}
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+pulseops:
+  security:
+    jwt:
+      secret: test-only-secret-that-is-at-least-32-bytes-long

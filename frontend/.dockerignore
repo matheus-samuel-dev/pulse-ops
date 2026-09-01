@@ -1,0 +1,12 @@
+.git
+.gitignore
+.idea
+.vscode
+node_modules
+dist
+coverage
+test-results
+Dockerfile
+*.log
+src/**/*.test.ts
+src/**/*.test.tsx

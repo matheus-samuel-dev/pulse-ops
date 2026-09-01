@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/pulseops}
+    username: ${DB_USERNAME:pulseops}
+    password: ${DB_PASSWORD:pulseops}
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    clean-disabled: true
+
+logging:
+  level:
+    com.pulseops: DEBUG
+    org.hibernate.SQL: INFO
+
+pulseops:
+  security:
+    outbound:
+      # Enable explicitly only when a local/private target must be monitored during development.
+      allow-private-networks: ${MONITORING_ALLOW_PRIVATE_NETWORKS:false}
+    jwt:
+      secret: ${JWT_SECRET:dev-only-pulseops-signing-secret-change-before-production-2026}

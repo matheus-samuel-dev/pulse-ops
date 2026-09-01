@@ -1,0 +1,145 @@
+import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
+import { alpha, Box, IconButton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography, useTheme } from '@mui/material';
+import { Line, LineChart, ResponsiveContainer, YAxis } from 'recharts';
+import { useNavigate } from 'react-router-dom';
+import type { SystemHealth, SystemStatus } from '../../types/api';
+import { Panel } from '../common/Panel';
+import { environmentLabels, formatLatency, formatPercent, formatRelativeTime } from './dashboardFormatters';
+import { SystemStatusChip } from './SystemStatusChip';
+
+const statusColor: Record<SystemStatus, string> = {
+  OPERATIONAL: '#39c995',
+  DEGRADED: '#f2b84b',
+  DOWN: '#ef6673',
+  UNKNOWN: '#8fa0b9',
+};
+
+export function SystemHealthTable({ systems }: { systems: SystemHealth[] }) {
+  const theme = useTheme();
+  const navigate = useNavigate();
+
+  return (
+    <Panel sx={{ overflow: 'hidden' }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        justifyContent="space-between"
+        gap={1}
+        px={{ xs: 2, md: 2.5 }}
+        py={2.25}
+        borderBottom="1px solid"
+        borderColor="divider"
+      >
+        <Box>
+          <Typography variant="h2">Saúde dos sistemas</Typography>
+          <Typography color="text.secondary" variant="body2" mt={0.45}>
+            Condição operacional e desempenho mais recente
+          </Typography>
+        </Box>
+        <Typography variant="caption" color="text.secondary">
+          {systems.length} {systems.length === 1 ? 'sistema monitorado' : 'sistemas monitorados'}
+        </Typography>
+      </Stack>
+      <TableContainer>
+        <Table sx={{ minWidth: 760 }} aria-label="Saúde dos sistemas monitorados">
+          <TableHead>
+            <TableRow>
+              {['Sistema', 'Status', 'Uptime', 'Última verificação', 'Latência', 'Tendência', ''].map((label) => (
+                <TableCell
+                  key={label || 'actions'}
+                  align={['Uptime', 'Latência', 'Tendência'].includes(label) ? 'right' : 'left'}
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: '0.67rem',
+                    fontWeight: 650,
+                    letterSpacing: '0.045em',
+                    textTransform: 'uppercase',
+                    borderColor: 'divider',
+                    py: 1.2,
+                  }}
+                >
+                  {label}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {systems.map((system) => {
+              const chartData = system.sparkline.map((value, index) => ({ index, value }));
+              const color = statusColor[system.status];
+              return (
+                <TableRow
+                  key={system.id}
+                  hover
+                  sx={{
+                    '&:last-child td': { borderBottom: 0 },
+                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.025) },
+                  }}
+                >
+                  <TableCell sx={{ borderColor: 'divider', py: 1.45 }}>
+                    <Stack direction="row" spacing={1.2} alignItems="center">
+                      <Box
+                        sx={{
+                          width: 31,
+                          height: 31,
+                          borderRadius: 2,
+                          display: 'grid',
+                          placeItems: 'center',
+                          bgcolor: alpha(theme.palette.primary.main, 0.09),
+                          color: 'primary.main',
+                          fontSize: '0.72rem',
+                          fontWeight: 750,
+                        }}
+                      >
+                        {system.name.slice(0, 2).toUpperCase()}
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" fontWeight={650}>{system.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {environmentLabels[system.environment]}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </TableCell>
+                  <TableCell sx={{ borderColor: 'divider' }}><SystemStatusChip status={system.status} /></TableCell>
+                  <TableCell align="right" sx={{ borderColor: 'divider', fontWeight: 650 }}>
+                    {formatPercent(system.uptime)}
+                  </TableCell>
+                  <TableCell sx={{ borderColor: 'divider', color: 'text.secondary', fontSize: '0.78rem' }}>
+                    {formatRelativeTime(system.lastCheckedAt)}
+                  </TableCell>
+                  <TableCell align="right" sx={{ borderColor: 'divider', fontWeight: 650 }}>
+                    {formatLatency(system.latencyMs)}
+                  </TableCell>
+                  <TableCell align="right" sx={{ borderColor: 'divider' }}>
+                    <Box width={88} height={30} ml="auto" aria-label={`Tendência de latência de ${system.name}`}>
+                      {chartData.length ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={chartData}>
+                            <YAxis domain={['dataMin - 10', 'dataMax + 10']} hide />
+                            <Line dataKey="value" type="monotone" stroke={color} strokeWidth={1.8} dot={false} isAnimationActive={false} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : <Typography color="text.secondary">—</Typography>}
+                    </Box>
+                  </TableCell>
+                  <TableCell align="right" sx={{ borderColor: 'divider', width: 48 }}>
+                    <Tooltip title="Ver detalhes">
+                      <IconButton
+                        size="small"
+                        aria-label={`Ver detalhes de ${system.name}`}
+                        onClick={() => navigate(`/sistemas/${system.id}`)}
+                      >
+                        <MoreHorizRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Panel>
+  );
+}
