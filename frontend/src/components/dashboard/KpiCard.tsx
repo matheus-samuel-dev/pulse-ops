@@ -1,7 +1,7 @@
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
-import { alpha, Box, Stack, Typography, useTheme, type SvgIconProps } from '@mui/material';
+import { alpha, Box, Stack, Tooltip, Typography, useTheme, type SvgIconProps } from '@mui/material';
 import type { ComponentType } from 'react';
 import { Panel } from '../common/Panel';
 
@@ -13,9 +13,10 @@ interface KpiCardProps {
   color: string;
   inverseChange?: boolean;
   note?: string;
+  help?: string;
 }
 
-export function KpiCard({ label, value, change, icon: Icon, color, inverseChange, note }: KpiCardProps) {
+export function KpiCard({ label, value, change, icon: Icon, color, inverseChange, note, help }: KpiCardProps) {
   const theme = useTheme();
   const hasChange = typeof change === 'number';
   const positive = (change ?? 0) > 0;
@@ -39,9 +40,11 @@ export function KpiCard({ label, value, change, icon: Icon, color, inverseChange
       />
       <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
         <Box>
-          <Typography color="text.secondary" fontSize="0.76rem" fontWeight={550}>
-            {label}
-          </Typography>
+          <Tooltip title={help ?? ''} disableHoverListener={!help}>
+            <Typography color="text.secondary" fontSize="0.78rem" fontWeight={550} sx={{ cursor: help ? 'help' : 'default', textDecoration: help ? 'underline dotted' : 'none', textUnderlineOffset: 3 }}>
+              {label}
+            </Typography>
+          </Tooltip>
           <Typography mt={1.15} fontSize={{ xs: '1.65rem', lg: '1.85rem' }} fontWeight={720} letterSpacing="-0.045em">
             {value}
           </Typography>

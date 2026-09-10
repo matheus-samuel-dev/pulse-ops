@@ -15,7 +15,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { useCallback, useEffect, useState, type ComponentType } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react';
 import type { SvgIconProps } from '@mui/material';
 import { PageHeader } from '../components/common/PageHeader';
 import { Panel } from '../components/common/Panel';
@@ -24,6 +24,7 @@ import { environmentLabels, formatPercent, formatRelativeTime } from '../compone
 import { getApiErrorMessage } from '../services/api';
 import { reportsService } from '../services/reportsService';
 import type { Environment, OperationalEvent, OperationalReport } from '../types/api';
+import { buildOperationalCsv } from '../utils/operationalCsv';
 
 const eventLabel = { HEALTH_CHECK: 'Health check', INCIDENT: 'Incidente', DEPLOYMENT: 'Deploy', QUALITY: 'Qualidade' } as const;
 const impactColor = { INFO: '#56b6f7', SUCCESS: '#39c995', WARNING: '#f2b84b', CRITICAL: '#ef6673' } as const;
@@ -33,6 +34,9 @@ export function ReportsPage() {
   const [period, setPeriod] = useState('7d');
   const [environment, setEnvironment] = useState<Environment | 'ALL'>('ALL');
   const [report, setReport] = useState<OperationalReport | null>(null);
+  const [systemId, setSystemId] = useState('ALL');
+  const [impact, setImpact] = useState<OperationalEvent['impact'] | 'ALL'>('ALL');
+  const [eventStatus, setEventStatus] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,20 +47,35 @@ export function ReportsPage() {
   }, [period, environment]);
   useEffect(() => { void load(); }, [load]);
 
+  const systems = useMemo(() => [...new Map(report?.feed.map((event) => [event.systemId, event.systemName]) ?? []).entries()].sort((a, b) => a[1].localeCompare(b[1])), [report]);
+  const statuses = useMemo(() => [...new Set(report?.feed.map((event) => event.status) ?? [])].sort(), [report]);
+  const filteredFeed = useMemo(() => report?.feed.filter((event) =>
+    (systemId === 'ALL' || event.systemId === systemId)
+    && (impact === 'ALL' || event.impact === impact)
+    && (eventStatus === 'ALL' || event.status === eventStatus)) ?? [],
+  [report, systemId, impact, eventStatus]);
+
   const exportCsv = () => {
     if (!report) return;
-    const rows = [['data','tipo','sistema','ambiente','titulo','status'], ...report.feed.map((event) => [event.occurredAt,event.type,event.systemName,event.environment,event.title,event.status])];
-    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"','""')}"`).join(',')).join('\n');
+    const csv = buildOperationalCsv(filteredFeed);
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const anchor = document.createElement('a'); anchor.href = url; anchor.download = `pulseops-relatorio-${report.period}.csv`; anchor.click(); URL.revokeObjectURL(url);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `pulseops-relatorio-${report.period}.csv`;
+    anchor.hidden = true;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
   };
 
   return <Box px={{ xs: 2, sm: 3, xl: 4 }} py={{ xs: 2.5, md: 3.5 }} maxWidth={1500} mx="auto">
-    <PageHeader title="Relatórios" description="Uma leitura consolidada da operação, delivery e qualidade" eyebrow="Inteligência operacional" actions={<><TextField select size="small" label="Período" value={period} onChange={(event) => setPeriod(event.target.value)} sx={{ minWidth: 150 }}><MenuItem value="24h">24 horas</MenuItem><MenuItem value="7d">7 dias</MenuItem><MenuItem value="30d">30 dias</MenuItem></TextField><TextField select size="small" label="Ambiente" value={environment} onChange={(event) => setEnvironment(event.target.value as Environment | 'ALL')} sx={{ minWidth: 170 }}><MenuItem value="ALL">Todos</MenuItem><MenuItem value="PRODUCTION">Produção</MenuItem><MenuItem value="STAGING">Staging</MenuItem><MenuItem value="DEVELOPMENT">Desenvolvimento</MenuItem></TextField><Button variant="outlined" startIcon={<DownloadRoundedIcon/>} onClick={exportCsv} disabled={!report}>Exportar CSV</Button></>} />
+    <PageHeader title="Relatórios" description="Uma leitura consolidada da operação, delivery e qualidade" eyebrow="Inteligência operacional" actions={<><TextField select size="small" label="Período" value={period} onChange={(event) => setPeriod(event.target.value)} sx={{ minWidth: 150 }}><MenuItem value="24h">24 horas</MenuItem><MenuItem value="7d">7 dias</MenuItem><MenuItem value="30d">30 dias</MenuItem></TextField><TextField select size="small" label="Ambiente" value={environment} onChange={(event) => setEnvironment(event.target.value as Environment | 'ALL')} sx={{ minWidth: 170 }}><MenuItem value="ALL">Todos</MenuItem><MenuItem value="PRODUCTION">Produção</MenuItem><MenuItem value="STAGING">Staging</MenuItem><MenuItem value="DEVELOPMENT">Desenvolvimento</MenuItem></TextField><Button variant="outlined" startIcon={<DownloadRoundedIcon/>} onClick={exportCsv} disabled={!filteredFeed.length}>Exportar CSV</Button></>} />
     {loading && <><Box display="grid" gridTemplateColumns={{ xs:'1fr',sm:'repeat(2,1fr)',xl:'repeat(4,1fr)' }} gap={2}>{[1,2,3,4].map((item)=><Skeleton key={item} variant="rounded" height={140}/>)}</Box><Skeleton variant="rounded" height={420} sx={{mt:2}}/></>}
     {!loading && error && <ViewState kind="error" title="Falha ao gerar relatório" description={error} actionLabel="Tentar novamente" onAction={() => void load()}/>} 
     {!loading && report && <Stack spacing={2}>
       <Panel sx={{ p:2.5 }}><Stack direction={{xs:'column',sm:'row'}} justifyContent="space-between" gap={2}><Box><Typography variant="h2">Janela analisada</Typography><Typography color="text.secondary" variant="body2" mt={.6}>{new Date(report.windowStart).toLocaleString('pt-BR')} — {new Date(report.windowEnd).toLocaleString('pt-BR')}</Typography></Box><Stack direction="row" gap={.8}><Chip label={report.period} color="primary" variant="outlined"/><Chip label={report.environment ? environmentLabels[report.environment] : 'Todos os ambientes'} variant="outlined"/></Stack></Stack></Panel>
+      <Panel sx={{ p:2 }}><Stack direction={{xs:'column',lg:'row'}} gap={1.2} alignItems={{lg:'center'}}><Box flex={1}><Typography variant="body2" fontWeight={680}>Filtrar trilha operacional</Typography><Typography variant="caption" color="text.secondary">Os KPIs permanecem globais para a janela selecionada.</Typography></Box><TextField select size="small" label="Sistema" value={systemId} onChange={(event)=>setSystemId(event.target.value)} sx={{minWidth:190}}><MenuItem value="ALL">Todos os sistemas</MenuItem>{systems.map(([id,name])=><MenuItem key={id} value={id}>{name}</MenuItem>)}</TextField><TextField select size="small" label="Status" value={eventStatus} onChange={(event)=>setEventStatus(event.target.value)} sx={{minWidth:145}}><MenuItem value="ALL">Todos</MenuItem>{statuses.map((value)=><MenuItem key={value} value={value}>{value}</MenuItem>)}</TextField><TextField select size="small" label="Impacto" value={impact} onChange={(event)=>setImpact(event.target.value as OperationalEvent['impact']|'ALL')} sx={{minWidth:145}}><MenuItem value="ALL">Todos</MenuItem><MenuItem value="SUCCESS">Sucesso</MenuItem><MenuItem value="WARNING">Atenção</MenuItem><MenuItem value="CRITICAL">Crítico</MenuItem><MenuItem value="INFO">Informativo</MenuItem></TextField></Stack></Panel>
       <Box display="grid" gridTemplateColumns={{ xs:'1fr',sm:'repeat(2,1fr)',xl:'repeat(4,1fr)' }} gap={2}>
         <ReportMetric icon={CloudDoneRoundedIcon} label="Disponibilidade" value={formatPercent(report.kpis.availability)} note={`${report.kpis.successfulHealthChecks}/${report.kpis.totalHealthChecks} checks`} color={theme.palette.success.main}/>
         <ReportMetric icon={ReportProblemRoundedIcon} label="Incidentes ativos" value={String(report.kpis.activeIncidents)} note={`${report.kpis.incidentsOpened} abertos na janela`} color={theme.palette.error.main}/>
@@ -64,7 +83,7 @@ export function ReportsPage() {
         <ReportMetric icon={ScienceRoundedIcon} label="Aprovação de testes" value={formatPercent(report.kpis.testPassRate)} note={`${report.kpis.passedTests}/${report.kpis.totalTests} testes`} color={theme.palette.secondary.main}/>
       </Box>
       <Box display="grid" gridTemplateColumns={{xs:'1fr',lg:'minmax(0,1.4fr) minmax(300px,.6fr)'}} gap={2}>
-        <Panel sx={{ p:2.5 }}><Typography variant="h2">Histórico operacional</Typography><Typography variant="body2" color="text.secondary" mt={.5}>Eventos correlacionados, do mais recente ao mais antigo</Typography><Stack mt={2.5} spacing={0}>{report.feed.length ? report.feed.map((event,index)=><EventRow key={`${event.type}-${event.id}`} event={event} last={index===report.feed.length-1}/>) : <ViewState kind="empty" title="Sem eventos" description="Nenhum evento foi registrado nesta janela."/>}</Stack></Panel>
+        <Panel sx={{ p:2.5 }}><Typography variant="h2">Histórico operacional</Typography><Typography variant="body2" color="text.secondary" mt={.5}>Eventos correlacionados, do mais recente ao mais antigo</Typography><Stack mt={2.5} spacing={0}>{filteredFeed.length ? filteredFeed.map((event,index)=><EventRow key={`${event.type}-${event.id}`} event={event} last={index===filteredFeed.length-1}/>) : <ViewState kind="empty" title="Sem eventos" description="Nenhum evento corresponde aos filtros selecionados."/>}</Stack></Panel>
         <Stack spacing={2}><Panel sx={{p:2.5}}><Typography variant="h2">Saúde da frota</Typography><Stack mt={2.2} spacing={1.4}><Bar label="Operacionais" value={report.kpis.operationalSystems} total={report.kpis.monitoredSystems} color={theme.palette.success.main}/><Bar label="Degradados" value={report.kpis.degradedSystems} total={report.kpis.monitoredSystems} color={theme.palette.warning.main}/><Bar label="Indisponíveis" value={report.kpis.downSystems} total={report.kpis.monitoredSystems} color={theme.palette.error.main}/><Bar label="Sem dados" value={report.kpis.unknownSystems} total={report.kpis.monitoredSystems} color={theme.palette.text.disabled}/></Stack></Panel><Panel sx={{p:2.5}}><Typography variant="h2">Cobertura média</Typography><Typography fontSize="2.3rem" fontWeight={760} mt={2}>{formatPercent(report.kpis.averageLineCoverage)}</Typography><Typography variant="body2" color="text.secondary">linhas · {formatPercent(report.kpis.averageBranchCoverage)} branches</Typography></Panel></Stack>
       </Box>
     </Stack>}

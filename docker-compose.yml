@@ -43,10 +43,12 @@ services:
       JWT_ISSUER: ${JWT_ISSUER:-pulseops}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
       MONITORING_INTERVAL_MS: ${MONITORING_INTERVAL_MS:-60000}
+      MONITORING_ENABLED: ${MONITORING_ENABLED:-false}
       MONITORING_INITIAL_DELAY_MS: ${MONITORING_INITIAL_DELAY_MS:-300000}
       MONITORING_CONCURRENCY: ${MONITORING_CONCURRENCY:-4}
       MONITORING_QUEUE_CAPACITY: ${MONITORING_QUEUE_CAPACITY:-256}
       MONITORING_ALLOW_PRIVATE_NETWORKS: ${MONITORING_ALLOW_PRIVATE_NETWORKS:-false}
+      DEMO_READ_ONLY: ${DEMO_READ_ONLY:-true}
       JAVA_OPTS: ${JAVA_OPTS:--XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-18083}:8080"
@@ -83,6 +85,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: /api
+        VITE_DEMO_MODE: ${VITE_DEMO_MODE:-true}
     ports:
       - "${FRONTEND_PORT:-3000}:80"
     depends_on:

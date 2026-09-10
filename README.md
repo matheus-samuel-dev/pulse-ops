@@ -11,9 +11,9 @@ Uma plataforma full stack de observabilidade que conecta saúde operacional, inc
 ![React 19](https://img.shields.io/badge/React-19-0ea5e9?style=for-the-badge&logo=react&logoColor=white)
 ![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-4169e1?style=for-the-badge&logo=postgresql&logoColor=white)
 
-![Tests](https://img.shields.io/badge/backend_tests-264%20passing-16a34a?style=flat-square)
-![Line coverage](https://img.shields.io/badge/line_coverage-89.75%25-7c3aed?style=flat-square)
-![Service coverage](https://img.shields.io/badge/services-93.47%25-7c3aed?style=flat-square)
+![Tests](https://img.shields.io/badge/backend_tests-269%20passing-16a34a?style=flat-square)
+![Line coverage](https://img.shields.io/badge/line_coverage-89.37%25-7c3aed?style=flat-square)
+![Service coverage](https://img.shields.io/badge/services-93.48%25-7c3aed?style=flat-square)
 ![Docker Compose](https://img.shields.io/badge/Docker_Compose-one--command-2496ed?style=flat-square&logo=docker&logoColor=white)
 
 </div>
@@ -56,16 +56,16 @@ O PulseOps foi construído como um produto backend-first: regras operacionais ex
 > [!IMPORTANT]
 > Qualidade é uma capacidade do produto e também uma propriedade do código. O PulseOps mede testes e cobertura dos sistemas monitorados enquanto seu próprio backend é protegido por uma suíte extensa de JUnit 5, Mockito, AssertJ, MockMvc e Testcontainers.
 
-Resultados reais da validação completa de **31/08/2026**, com Docker Desktop ativo:
+Resultados reais da validação completa de **10/09/2026**, com Docker Desktop ativo:
 
 | Indicador | Resultado verificado |
 | --- | ---: |
-| Testes do backend | **264 executados, 264 aprovados** |
+| Testes do backend | **269 executados, 269 aprovados** |
 | Falhos / erros / ignorados | **0 / 0 / 0** |
 | Integração com PostgreSQL 16.14 | **8/8 aprovados** |
-| Cobertura de linhas | **89,75%** — 1.838 de 2.048 |
-| Cobertura de branches | **75,68%** — 610 de 806 |
-| Cobertura da camada de services | **93,47%** |
+| Cobertura de linhas | **89,37%** — 1.925 de 2.154 |
+| Cobertura de branches | **74,13%** — 662 de 893 |
+| Cobertura da camada de services | **93,48%** |
 | Gate JaCoCo | **aprovado** — mínimo global de 85% em linhas |
 
 Os números acima são derivados da execução de `clean verify` neste estado do projeto. O relatório navegável é gerado em `backend/target/site/jacoco/index.html`.
@@ -106,7 +106,7 @@ Os números acima são derivados da execução de `clean verify` neste estado do
 ### Experiência SaaS
 
 - dashboard responsivo com KPIs, comparação temporal, gráficos e sparklines;
-- páginas completas de sistemas, incidentes, deploys, qualidade, alertas, relatórios e configurações;
+- páginas completas de sistemas, incidentes, deploys, qualidade, alertas, relatórios, auditoria e configurações;
 - login com credenciais demonstrativas, sessão JWT e logout;
 - tema escuro premium, tema claro, drawer mobile e navegação por teclado;
 - skeleton loaders, empty states, snackbars, drawers e diálogos acessíveis;
@@ -347,12 +347,16 @@ O seed existe apenas no perfil `dev`, só popula uma base sem sistemas e nunca �
 
 Também são criados dados coerentes para PlaySpace, LogiTrack, Gestão Financeira e AI Web Auditor: históricos de checks, incidentes, deploys, relatórios de qualidade e notificações.
 
+> Os dados apresentados no ambiente público são dados demonstrativos gerados para simular cenários reais de operação.
+
+No Compose, o modo público demonstrativo desativa o scheduler externo e bloqueia mutações na API, mantendo login, navegação, filtros, relatórios e métricas plenamente exploráveis sem permitir alterações persistentes por visitantes.
+
 ## API e documentação
 
 ### Autenticação
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:18083/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@pulseops.dev","password":"PulseOps@2026"}'
 ```
@@ -400,6 +404,8 @@ Validação, autenticação, autorização, conflito, recurso ausente e regra de
 - senhas armazenadas com BCrypt, custo 12;
 - RBAC com `ADMIN`, `DEVELOPER` e `VIEWER`, aplicado por endpoint e método;
 - registro público limitado à role `VIEWER`;
+- modo demonstrativo protegido também no backend: requisições mutáveis em `/api/**` retornam `403`, independentemente da interface;
+- rate limiting no Nginx para tentativas de login no fluxo público;
 - respostas REST padronizadas para `401` e `403`, sem redirecionamento HTML;
 - CORS configurável por ambiente e proxy same-origin no fluxo Docker;
 - consultas de notificação limitadas ao usuário presente no token;

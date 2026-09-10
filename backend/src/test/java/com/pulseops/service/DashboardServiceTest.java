@@ -222,6 +222,8 @@ class DashboardServiceTest {
                         check(system, NOW_AT_UTC.minusMinutes(6), 503, 100, false, "HTTP 503"),
                         check(system, NOW_AT_UTC.minusMinutes(5), 404, 100, false, "HTTP 404"),
                         check(system, NOW_AT_UTC.minusMinutes(4), null, 100, false, "Read TIMEOUT"),
+                        check(system, NOW_AT_UTC.minusSeconds(210), null, 100, false,
+                                "Tempo limite excedido durante o health check."),
                         check(system, NOW_AT_UTC.minusMinutes(3), null, 100, false, "DNS failure"),
                         check(system, NOW_AT_UTC.minusMinutes(2), 302, 100, false, "Unexpected redirect"),
                         check(system, NOW_AT_UTC.minusSeconds(90), null, 100, false, null),
@@ -232,9 +234,9 @@ class DashboardServiceTest {
 
         assertThat(result.serverErrors()).isOne();
         assertThat(result.clientErrors()).isOne();
-        assertThat(result.timeouts()).isOne();
+        assertThat(result.timeouts()).isEqualTo(2);
         assertThat(result.others()).isEqualTo(3);
-        assertThat(result.total()).isEqualTo(6);
+        assertThat(result.total()).isEqualTo(7);
         assertThat(result.period()).isEqualTo("30d");
     }
 

@@ -100,7 +100,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiErrorResponse> handleUnexpected(Exception exception, HttpServletRequest request) {
-        log.error("Unexpected request failure at {}", request.getRequestURI(), exception);
+        log.error("Unexpected request failure at {} ({})",
+                request.getRequestURI(), exception.getClass().getSimpleName());
         return response(HttpStatus.INTERNAL_SERVER_ERROR, "Ocorreu um erro interno inesperado", request);
     }
 

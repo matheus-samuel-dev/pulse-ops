@@ -398,16 +398,16 @@ Executar uma classe durante desenvolvimento:
 
 ### Resultados reais
 
-Resultado da execução `./mvnw clean verify` de 31/08/2026, com Docker Desktop ativo:
+Resultado da execução `mvn clean verify` de 10/09/2026, com Docker Desktop ativo:
 
 | Indicador | Resultado |
 | --- | ---: |
-| Testes executados | **264** |
-| Aprovados | **264** |
+| Testes executados | **269** |
+| Aprovados | **269** |
 | Falhos / erros / ignorados | **0 / 0 / 0** |
 | Integração PostgreSQL 16 | **8/8 aprovados** |
-| Cobertura de linhas | **89,75%** (1.838 de 2.048) |
-| Cobertura de branches | **75,68%** (610 de 806) |
+| Cobertura de linhas | **89,37%** (1.925 de 2.154) |
+| Cobertura de branches | **74,13%** (662 de 893) |
 
 Os números acima são evidência da execução versionada neste estado do projeto e devem ser atualizados sempre que a suíte mudar.
 
@@ -419,4 +419,4 @@ Os números acima são evidência da execução versionada neste estado do proje
 - [x] JaCoCo passou pelo gate configurado
 - [x] autenticação e matriz RBAC validadas
 - [x] scheduler e tratamento de falhas externas validados
-- [ ] Swagger e Actuator acessíveis no ambiente local
+- [x] Swagger e Actuator acessíveis no ambiente local

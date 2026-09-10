@@ -148,7 +148,8 @@ public class OperationalReportService {
                         ? OperationalEventImpact.CRITICAL
                         : OperationalEventImpact.WARNING;
         return event(check.getId(), OperationalEventType.HEALTH_CHECK, check.getCheckedAt(), system,
-                "Health check " + status.toLowerCase(), description, status, impact);
+                check.isSuccess() ? "Health check bem-sucedido" : "Falha no health check",
+                description, status, impact, "Scheduler PulseOps");
     }
 
     private OperationalEventResponse from(Incident incident) {
@@ -159,7 +160,8 @@ public class OperationalReportService {
                         ? OperationalEventImpact.CRITICAL
                         : OperationalEventImpact.WARNING;
         return event(incident.getId(), OperationalEventType.INCIDENT, incident.getStartedAt(), system,
-                incident.getTitle(), incident.getDescription(), incident.getStatus().name(), impact);
+                incident.getTitle(), incident.getDescription(), incident.getStatus().name(), impact,
+                incident.isAutomatic() ? "PulseOps Automation" : "Equipe de Operações");
     }
 
     private OperationalEventResponse from(Deployment deployment) {
@@ -171,7 +173,8 @@ public class OperationalReportService {
             default -> OperationalEventImpact.INFO;
         };
         return event(deployment.getId(), OperationalEventType.DEPLOYMENT, deployment.getDeployedAt(), system,
-                "Deploy " + deployment.getVersion(), deployment.getDescription(), deployment.getStatus().name(), impact);
+                "Deploy " + deployment.getVersion(), deployment.getDescription(), deployment.getStatus().name(), impact,
+                "GitHub Actions");
     }
 
     private OperationalEventResponse from(TestReport report) {
@@ -185,7 +188,7 @@ public class OperationalReportService {
         String description = "%d testes · %s%% linhas · %s%% branches".formatted(
                 report.getTotalTests(), report.getLineCoverage(), report.getBranchCoverage());
         return event(report.getId(), OperationalEventType.QUALITY, report.getGeneratedAt(), system,
-                "Relatório de qualidade", description, classification.name(), impact);
+                "Relatório de qualidade", description, classification.name(), impact, "Pipeline de Qualidade");
     }
 
     private OperationalEventResponse event(
@@ -196,10 +199,11 @@ public class OperationalReportService {
             String title,
             String description,
             String status,
-            OperationalEventImpact impact
+            OperationalEventImpact impact,
+            String source
     ) {
         return new OperationalEventResponse(id, type, occurredAt, system.getId(), system.getName(),
-                system.getEnvironment(), title, description, status, impact);
+                system.getEnvironment(), title, description, status, impact, source);
     }
 
     private long countStatus(List<MonitoredSystem> systems, SystemStatus status) {

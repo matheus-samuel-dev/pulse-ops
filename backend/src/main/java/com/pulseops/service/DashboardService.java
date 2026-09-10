@@ -250,7 +250,8 @@ public class DashboardService {
             return false;
         }
         String normalized = message.toLowerCase();
-        return normalized.contains("timeout") || normalized.contains("timed out") || normalized.contains("time out");
+        return normalized.contains("timeout") || normalized.contains("timed out")
+                || normalized.contains("time out") || normalized.contains("tempo limite");
     }
 
     private TimeRange period(String value) {

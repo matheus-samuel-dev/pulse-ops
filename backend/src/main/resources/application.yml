@@ -62,6 +62,7 @@ springdoc:
 
 pulseops:
   monitoring:
+    enabled: ${MONITORING_ENABLED:true}
     fixed-delay-ms: ${MONITORING_INTERVAL_MS:60000}
     initial-delay-ms: ${MONITORING_INITIAL_DELAY_MS:15000}
     concurrency: ${MONITORING_CONCURRENCY:4}
@@ -82,3 +83,5 @@ pulseops:
       issuer: ${JWT_ISSUER:pulseops}
     cors:
       allowed-origin-patterns: ${CORS_ALLOWED_ORIGINS:http://localhost:*}
+  demo:
+    read-only: ${DEMO_READ_ONLY:false}

@@ -26,6 +26,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useAuth } from '../auth/AuthContext';
+import { isDemoMode } from '../config/demo';
 import { Panel } from '../components/common/Panel';
 import { ViewState } from '../components/common/ViewState';
 import { environmentLabels, formatLatency, formatPercent, formatRelativeTime } from '../components/dashboard/dashboardFormatters';
@@ -120,9 +121,9 @@ export function SystemDetailPage() {
           <Stack direction="row" gap={0.8} mt={1.4} flexWrap="wrap"><Chip size="small" label={environmentLabels[system.environment]} variant="outlined" /><Chip size="small" label={system.baseUrl} variant="outlined" /></Stack>
         </Box>
         <Stack direction="row" gap={1} alignItems="flex-start" flexWrap="wrap">
-          {(user?.role === 'ADMIN' || user?.role === 'DEVELOPER') && <Button variant="contained" startIcon={<AutorenewRoundedIcon />} disabled={checking} onClick={() => void runCheck()}>Verificar agora</Button>}
-          {user?.role === 'ADMIN' && <Button variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => setEditOpen(true)}>Editar</Button>}
-          {user?.role === 'ADMIN' && <Button color="error" variant="outlined" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteOpen(true)}>Excluir</Button>}
+          {!isDemoMode && (user?.role === 'ADMIN' || user?.role === 'DEVELOPER') && <Button variant="contained" startIcon={<AutorenewRoundedIcon />} disabled={checking} onClick={() => void runCheck()}>Verificar agora</Button>}
+          {!isDemoMode && user?.role === 'ADMIN' && <Button variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => setEditOpen(true)}>Editar</Button>}
+          {!isDemoMode && user?.role === 'ADMIN' && <Button color="error" variant="outlined" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteOpen(true)}>Excluir</Button>}
         </Stack>
       </Stack>
 

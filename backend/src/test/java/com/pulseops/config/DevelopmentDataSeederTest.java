@@ -2,10 +2,13 @@ package com.pulseops.config;
 
 import com.pulseops.domain.deployment.Deployment;
 import com.pulseops.domain.incident.Incident;
+import com.pulseops.domain.incident.IncidentSeverity;
+import com.pulseops.domain.incident.IncidentStatus;
 import com.pulseops.domain.monitoring.HealthCheck;
 import com.pulseops.domain.notification.Notification;
 import com.pulseops.domain.quality.TestReport;
 import com.pulseops.domain.system.MonitoredSystem;
+import com.pulseops.domain.system.SystemStatus;
 import com.pulseops.domain.user.User;
 import com.pulseops.repository.DeploymentRepository;
 import com.pulseops.repository.HealthCheckRepository;
@@ -17,7 +20,10 @@ import com.pulseops.repository.UserRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.time.OffsetDateTime;
+import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -87,9 +93,18 @@ class DevelopmentDataSeederTest {
                     assertThat(check.getResponseTimeMs()).isNotNegative();
                 });
         assertThat(incidents.getValue()).hasSize(5)
-                .anySatisfy(incident -> assertThat(incident.isAutomatic()).isTrue());
+                .anySatisfy(incident -> {
+                    assertThat(incident.isAutomatic()).isTrue();
+                    assertThat(incident.getTitle()).contains("2.4.9");
+                    assertThat(incident.getDescription()).contains("três timeouts");
+                });
         assertThat(deployments.getValue()).hasSize(16)
                 .allSatisfy(deployment -> assertThat(deployment.getCommitHash()).hasSize(7));
+        assertThat(deployments.getValue()).anySatisfy(deployment -> {
+            assertThat(deployment.getVersion()).isEqualTo("2.4.9");
+            assertThat(deployment.getStatus()).isEqualTo(com.pulseops.domain.deployment.DeploymentStatus.FAILED);
+            assertThat(deployment.getDescription()).contains("incidente crítico correlacionado");
+        });
         assertThat(reports.getValue()).hasSize(8)
                 .allSatisfy(report -> assertThat(
                         report.getPassedTests() + report.getFailedTests() + report.getSkippedTests())
@@ -106,5 +121,89 @@ class DevelopmentDataSeederTest {
         verify(userRepository, never()).save(any());
         verify(systemRepository, never()).saveAll(anyList());
         verify(healthCheckRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void shouldPreserveResolvedAutomaticIncidentTimelineWhenRefreshingDemo() {
+        MonitoredSystem playSpace = demoSystem("PlaySpace");
+        MonitoredSystem logiTrack = demoSystem("LogiTrack");
+        MonitoredSystem finance = demoSystem("Gestão Financeira");
+        MonitoredSystem auditor = demoSystem("AI Web Auditor");
+        HealthCheck check = new HealthCheck();
+        check.setMonitoredSystem(auditor);
+        check.setCheckedAt(OffsetDateTime.parse("2026-08-27T17:00:00Z"));
+        Incident resolved = new Incident();
+        resolved.setMonitoredSystem(auditor);
+        resolved.setTitle("Timeout histórico");
+        resolved.setStatus(IncidentStatus.RESOLVED);
+        resolved.setAutomatic(true);
+        resolved.setStartedAt(OffsetDateTime.parse("2026-08-27T14:00:00Z"));
+        resolved.setResolvedAt(OffsetDateTime.parse("2026-08-27T15:00:00Z"));
+        when(systemRepository.count()).thenReturn(4L);
+        when(systemRepository.findAll()).thenReturn(List.of(playSpace, logiTrack, finance, auditor));
+        when(healthCheckRepository.findAll()).thenReturn(List.of(check));
+        when(incidentRepository.findAll()).thenReturn(List.of(resolved));
+
+        seeder.run(arguments);
+
+        verify(incidentRepository).saveAll(incidents.capture());
+        Incident refreshed = incidents.getValue().getFirst();
+        assertThat(refreshed.getTitle()).isEqualTo("Timeout histórico");
+        assertThat(Duration.between(refreshed.getStartedAt(), refreshed.getResolvedAt())).isEqualTo(Duration.ofHours(1));
+        assertThat(playSpace.getStatus()).isEqualTo(SystemStatus.OPERATIONAL);
+        assertThat(logiTrack.getStatus()).isEqualTo(SystemStatus.DEGRADED);
+        assertThat(finance.getStatus()).isEqualTo(SystemStatus.OPERATIONAL);
+        assertThat(auditor.getStatus()).isEqualTo(SystemStatus.DOWN);
+    }
+
+    @Test
+    void shouldKeepOnlyTheCorrelatedAuditorAutomaticIncidentActive() {
+        MonitoredSystem playSpace = demoSystem("PlaySpace");
+        MonitoredSystem logiTrack = demoSystem("LogiTrack");
+        MonitoredSystem finance = demoSystem("Gestão Financeira");
+        MonitoredSystem auditor = demoSystem("AI Web Auditor");
+        HealthCheck check = new HealthCheck();
+        check.setMonitoredSystem(auditor);
+        check.setCheckedAt(OffsetDateTime.parse("2026-08-27T17:00:00Z"));
+
+        Incident staleAutomatic = new Incident();
+        staleAutomatic.setMonitoredSystem(playSpace);
+        staleAutomatic.setTitle("Automated availability incident");
+        staleAutomatic.setSeverity(IncidentSeverity.HIGH);
+        staleAutomatic.setStatus(IncidentStatus.OPEN);
+        staleAutomatic.setAutomatic(true);
+        staleAutomatic.setStartedAt(OffsetDateTime.parse("2026-08-27T16:00:00Z"));
+
+        Incident correlated = new Incident();
+        correlated.setMonitoredSystem(auditor);
+        correlated.setTitle("Automated availability incident");
+        correlated.setSeverity(IncidentSeverity.HIGH);
+        correlated.setStatus(IncidentStatus.OPEN);
+        correlated.setAutomatic(true);
+        correlated.setStartedAt(OffsetDateTime.parse("2026-08-27T16:30:00Z"));
+
+        when(systemRepository.count()).thenReturn(4L);
+        when(systemRepository.findAll()).thenReturn(List.of(playSpace, logiTrack, finance, auditor));
+        when(healthCheckRepository.findAll()).thenReturn(List.of(check));
+        when(incidentRepository.findAll()).thenReturn(List.of(staleAutomatic, correlated));
+
+        seeder.run(arguments);
+
+        verify(incidentRepository).saveAll(incidents.capture());
+        assertThat(staleAutomatic.getStatus()).isEqualTo(IncidentStatus.RESOLVED);
+        assertThat(staleAutomatic.getResolvedAt()).isEqualTo(OffsetDateTime.parse("2026-08-27T18:00:00Z"));
+        assertThat(staleAutomatic.getTitle()).isEqualTo("Instabilidade de disponibilidade detectada");
+        assertThat(staleAutomatic.getDescription()).contains("falhas consecutivas", "automaticamente");
+        assertThat(correlated.getStatus()).isEqualTo(IncidentStatus.OPEN);
+        assertThat(correlated.getSeverity()).isEqualTo(IncidentSeverity.CRITICAL);
+        assertThat(correlated.getTitle()).contains("2.4.9");
+        assertThat(correlated.getStartedAt()).isEqualTo(OffsetDateTime.parse("2026-08-27T17:35:00Z"));
+    }
+
+    private MonitoredSystem demoSystem(String name) {
+        MonitoredSystem system = new MonitoredSystem();
+        system.setId(UUID.randomUUID());
+        system.setName(name);
+        return system;
     }
 }

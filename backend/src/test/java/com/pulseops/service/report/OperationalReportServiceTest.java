@@ -91,6 +91,10 @@ class OperationalReportServiceTest {
         assertThat(result.feed()).extracting(event -> event.type())
                 .containsExactly(OperationalEventType.INCIDENT, OperationalEventType.DEPLOYMENT,
                         OperationalEventType.QUALITY, OperationalEventType.HEALTH_CHECK);
+        assertThat(result.feed()).extracting(event -> event.source())
+                .containsExactly("Equipe de Operações", "GitHub Actions", "Pipeline de Qualidade", "Scheduler PulseOps");
+        assertThat(result.feed()).extracting(event -> event.title())
+                .contains("Health check bem-sucedido");
         verify(healthCheckRepository).countForOperationalReport(NOW.minusDays(7), NOW, Environment.PRODUCTION);
     }
 

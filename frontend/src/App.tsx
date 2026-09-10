@@ -1,6 +1,6 @@
 import { Box, CircularProgress } from '@mui/material';
-import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { AppShell } from './layout/AppShell';
 
@@ -13,11 +13,13 @@ const DeploymentsPage = lazy(() => import('./pages/DeploymentsPage').then((modul
 const QualityPage = lazy(() => import('./pages/QualityPage').then((module) => ({ default: module.QualityPage })));
 const AlertsPage = lazy(() => import('./pages/AlertsPage').then((module) => ({ default: module.AlertsPage })));
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((module) => ({ default: module.ReportsPage })));
+const AuditPage = lazy(() => import('./pages/AuditPage').then((module) => ({ default: module.AuditPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
 
 export function App() {
   return (
     <Suspense fallback={<Box minHeight="100vh" display="grid" sx={{ placeItems: 'center' }}><CircularProgress aria-label="Carregando página" /></Box>}>
+      <ScrollToTop />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
@@ -30,6 +32,7 @@ export function App() {
             <Route path="qualidade" element={<QualityPage />} />
             <Route path="alertas" element={<AlertsPage />} />
             <Route path="relatorios" element={<ReportsPage />} />
+            <Route path="auditoria" element={<AuditPage />} />
             <Route path="configuracoes" element={<SettingsPage />} />
           </Route>
         </Route>
@@ -37,4 +40,14 @@ export function App() {
       </Routes>
     </Suspense>
   );
+}
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname]);
+
+  return null;
 }

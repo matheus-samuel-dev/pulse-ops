@@ -168,6 +168,7 @@ export function DashboardPage() {
               icon={DnsRoundedIcon}
               color={theme.palette.primary.main}
               note={`${data.summary.operationalSystems} operacionais`}
+              help="Sistemas ativos incluídos nos health checks e agregações do período."
             />
             <KpiCard
               label="Disponibilidade média"
@@ -175,6 +176,7 @@ export function DashboardPage() {
               change={data.summary.availabilityChange}
               icon={AssessmentRoundedIcon}
               color={theme.palette.success.main}
+              help="Média percentual dos health checks bem-sucedidos entre os sistemas monitorados."
             />
             <KpiCard
               label="Cobertura de testes"
@@ -182,6 +184,7 @@ export function DashboardPage() {
               change={data.summary.coverageChange}
               icon={ScienceRoundedIcon}
               color={theme.palette.secondary.main}
+              help="Média do score de cobertura mais recente de cada sistema com relatório."
             />
             <KpiCard
               label="Incidentes abertos"
@@ -190,6 +193,7 @@ export function DashboardPage() {
               inverseChange
               icon={ReportProblemRoundedIcon}
               color={theme.palette.error.main}
+              help="Incidentes nos estados Aberto ou Investigando; queda é uma tendência favorável."
             />
           </Box>
 

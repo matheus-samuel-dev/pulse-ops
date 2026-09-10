@@ -2,6 +2,7 @@ import {
   Avatar,
   Badge,
   Box,
+  Chip,
   Divider,
   Drawer,
   IconButton,
@@ -23,6 +24,7 @@ import RocketLaunchRoundedIcon from '@mui/icons-material/RocketLaunchRounded';
 import ScienceRoundedIcon from '@mui/icons-material/ScienceRounded';
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
 import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
+import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
@@ -35,6 +37,9 @@ import type { SvgIconProps } from '@mui/material';
 import { PulseOpsLogo } from '../components/common/PulseOpsLogo';
 import { useAuth } from '../auth/AuthContext';
 import { useColorMode } from '../theme/PulseOpsThemeProvider';
+import { isDemoMode } from '../config/demo';
+
+const roleLabels = { ADMIN: 'Administrador', DEVELOPER: 'Desenvolvedor', VIEWER: 'Visualizador' } as const;
 
 const drawerWidth = 252;
 
@@ -53,6 +58,7 @@ const navigation: NavigationItem[] = [
   { label: 'Qualidade', path: '/qualidade', icon: ScienceRoundedIcon, available: true },
   { label: 'Alertas', path: '/alertas', icon: NotificationsNoneRoundedIcon, available: true },
   { label: 'Relatórios', path: '/relatorios', icon: AssessmentRoundedIcon, available: true },
+  { label: 'Auditoria', path: '/auditoria', icon: HistoryRoundedIcon, available: true },
   { label: 'Configurações', path: '/configuracoes', icon: SettingsRoundedIcon, available: true },
 ];
 
@@ -111,7 +117,7 @@ export function AppShell() {
                 <ListItemIcon sx={{ minWidth: 34, color: 'inherit' }}>
                   <Icon sx={{ fontSize: 19 }} />
                 </ListItemIcon>
-                <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: '0.79rem', fontWeight: active ? 650 : 500 }} />
+                <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: active ? 650 : 500 }} />
                 {active && <Box width={3} height={16} borderRadius={3} bgcolor="primary.main" />}
               </ListItemButton>
             );
@@ -131,7 +137,7 @@ export function AppShell() {
           </Avatar>
           <Box minWidth={0} flex={1}>
             <Typography variant="body2" noWrap fontWeight={650}>{user?.name}</Typography>
-            <Typography variant="caption" color="text.secondary">{user?.role}</Typography>
+            <Typography variant="caption" color="text.secondary">{user ? roleLabels[user.role] : ''}</Typography>
           </Box>
           <KeyboardArrowDownRoundedIcon color="disabled" fontSize="small" />
         </Stack>
@@ -199,6 +205,15 @@ export function AppShell() {
           )}
           {!desktop && <PulseOpsLogo compact />}
           <Box flex={1} />
+          {isDemoMode && (
+            <Chip
+              size="small"
+              label="Ambiente demonstrativo"
+              variant="outlined"
+              color="secondary"
+              sx={{ mr: { xs: 0.5, sm: 1 }, display: { xs: 'none', sm: 'inline-flex' }, fontWeight: 650 }}
+            />
+          )}
           <Tooltip title="Central de alertas">
             <IconButton aria-label="Abrir alertas" onClick={() => navigate('/alertas')}>
               <Badge color="error" variant="dot" overlap="circular">

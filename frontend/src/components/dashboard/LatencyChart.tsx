@@ -38,7 +38,7 @@ export function LatencyChart({ data }: { data: LatencyPoint[] }) {
       </Stack>
       <Box height={278} aria-label="Gráfico de latência das APIs">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 8, right: 4, left: -18, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 8, right: 4, left: 8, bottom: 0 }}>
             <defs>
               <linearGradient id="averageLatency" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={theme.palette.primary.main} stopOpacity={0.34} />
@@ -55,6 +55,7 @@ export function LatencyChart({ data }: { data: LatencyPoint[] }) {
               dy={9}
             />
             <YAxis
+              width={58}
               axisLine={false}
               tickLine={false}
               tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}

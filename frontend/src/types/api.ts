@@ -300,6 +300,7 @@ export interface OperationalEvent {
   description?: string;
   status: string;
   impact: 'INFO' | 'SUCCESS' | 'WARNING' | 'CRITICAL';
+  source: string;
 }
 
 export interface OperationalReport {

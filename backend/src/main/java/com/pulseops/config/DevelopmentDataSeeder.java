@@ -23,10 +23,12 @@ import com.pulseops.repository.TestReportRepository;
 import com.pulseops.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
@@ -37,6 +39,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @Profile("dev")
 public class DevelopmentDataSeeder implements ApplicationRunner {
+
+    private static final Set<String> DEMO_SYSTEM_NAMES = Set.of(
+            "PlaySpace", "LogiTrack", "Gestão Financeira", "AI Web Auditor");
 
     private final UserRepository userRepository;
     private final MonitoredSystemRepository systemRepository;
@@ -74,6 +79,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         if (systemRepository.count() > 0) {
+            refreshExistingDemoDataset();
             return;
         }
         User admin = createUser("Marina Costa", "admin@pulseops.dev", "PulseOps@2026", UserRole.ADMIN);
@@ -95,6 +101,111 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         seedDeployments(systems);
         seedQuality(systems);
         seedNotifications(admin);
+    }
+
+    private void refreshExistingDemoDataset() {
+        List<MonitoredSystem> demoSystems = systemRepository.findAll().stream()
+                .filter(system -> DEMO_SYSTEM_NAMES.contains(system.getName()))
+                .toList();
+        if (demoSystems.size() != DEMO_SYSTEM_NAMES.size()) {
+            return;
+        }
+
+        demoSystems.forEach(system -> system.setStatus(switch (system.getName()) {
+            case "PlaySpace", "Gestão Financeira" -> SystemStatus.OPERATIONAL;
+            case "LogiTrack" -> SystemStatus.DEGRADED;
+            case "AI Web Auditor" -> SystemStatus.DOWN;
+            default -> system.getStatus();
+        }));
+
+        Set<java.util.UUID> demoIds = demoSystems.stream().map(MonitoredSystem::getId).collect(java.util.stream.Collectors.toSet());
+        List<HealthCheck> checks = healthCheckRepository.findAll().stream()
+                .filter(check -> demoIds.contains(check.getMonitoredSystem().getId()))
+                .toList();
+        OffsetDateTime latestCheck = checks.stream().map(HealthCheck::getCheckedAt)
+                .max(OffsetDateTime::compareTo).orElse(null);
+        if (latestCheck == null) {
+            return;
+        }
+
+        Duration shift = Duration.between(latestCheck, OffsetDateTime.now(clock));
+        checks.forEach(check -> {
+            check.setCheckedAt(check.getCheckedAt().plus(shift));
+            check.setErrorMessage(publicDemoErrorMessage(check.getErrorMessage()));
+        });
+        healthCheckRepository.saveAll(checks);
+
+        List<Incident> incidents = incidentRepository.findAll().stream()
+                .filter(incident -> demoIds.contains(incident.getMonitoredSystem().getId()))
+                .toList();
+        Incident primaryAuditorIncident = incidents.stream()
+                .filter(incident -> "AI Web Auditor".equals(incident.getMonitoredSystem().getName()))
+                .filter(Incident::isAutomatic)
+                .filter(incident -> incident.getStatus() != IncidentStatus.RESOLVED)
+                .max(java.util.Comparator.comparing(Incident::getStartedAt))
+                .orElse(null);
+        incidents.forEach(incident -> {
+            incident.setStartedAt(incident.getStartedAt().plus(shift));
+            if (incident.getResolvedAt() != null) incident.setResolvedAt(incident.getResolvedAt().plus(shift));
+            if ("Automated availability incident".equals(incident.getTitle())) {
+                incident.setTitle("Instabilidade de disponibilidade detectada");
+                incident.setDescription("O PulseOps detectou falhas consecutivas de health check e registrou este incidente automaticamente.");
+            }
+            if (incident == primaryAuditorIncident) {
+                incident.setTitle("Indisponibilidade após deploy 2.4.9");
+                incident.setDescription("O release 2.4.9 falhou e foi seguido por três timeouts consecutivos no worker de auditoria.");
+                incident.setSeverity(IncidentSeverity.CRITICAL);
+                incident.setStartedAt(OffsetDateTime.now(clock).minusMinutes(25));
+            } else if (incident.isAutomatic() && incident.getStatus() != IncidentStatus.RESOLVED) {
+                incident.setStatus(IncidentStatus.RESOLVED);
+                incident.setResolvedAt(OffsetDateTime.now(clock));
+            }
+        });
+        incidentRepository.saveAll(incidents);
+
+        List<Deployment> deployments = deploymentRepository.findAll().stream()
+                .filter(deployment -> demoIds.contains(deployment.getMonitoredSystem().getId()))
+                .toList();
+        deployments.forEach(deployment -> {
+            deployment.setDeployedAt(deployment.getDeployedAt().plus(shift));
+            if ("AI Web Auditor".equals(deployment.getMonitoredSystem().getName())
+                    && deployment.getStatus() == DeploymentStatus.FAILED) {
+                deployment.setVersion("2.4.9");
+                deployment.setDeployedAt(OffsetDateTime.now(clock).minusMinutes(70));
+                deployment.setDurationSeconds(142L);
+                deployment.setDescription("Pipeline interrompido após regressão no worker; incidente crítico correlacionado automaticamente.");
+            }
+        });
+        deploymentRepository.saveAll(deployments);
+
+        List<TestReport> reports = testReportRepository.findAll().stream()
+                .filter(report -> demoIds.contains(report.getMonitoredSystem().getId()))
+                .toList();
+        reports.forEach(report -> report.setGeneratedAt(report.getGeneratedAt().plus(shift)));
+        testReportRepository.saveAll(reports);
+
+        List<Notification> notifications = notificationRepository.findAll();
+        notifications.stream().filter(notification -> "Incidente crítico aberto".equals(notification.getTitle()))
+                .forEach(notification -> notification.setMessage("AI Web Auditor ficou indisponível após o deploy 2.4.9."));
+        notificationRepository.saveAll(notifications);
+    }
+
+    private String publicDemoErrorMessage(String errorMessage) {
+        if (errorMessage == null || errorMessage.isBlank()) {
+            return errorMessage;
+        }
+        String normalized = errorMessage.toLowerCase(java.util.Locale.ROOT);
+        if (normalized.contains("timeout") || normalized.contains("timed out")
+                || normalized.contains("time out") || normalized.contains("tempo limite")) {
+            return "Tempo limite excedido durante o health check.";
+        }
+        if (normalized.contains("dns") || normalized.contains("resolve")) {
+            return "Falha ao resolver o endereço do serviço.";
+        }
+        if (normalized.contains("status")) {
+            return "A API retornou um status HTTP inesperado.";
+        }
+        return "Falha de comunicação durante o health check.";
     }
 
     private User createUser(String name, String email, String password, UserRole role) {
@@ -184,15 +295,20 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         OffsetDateTime now = OffsetDateTime.now(clock);
         incidentRepository.saveAll(List.of(
                 incident(playSpace, "Oscilação no gateway de reservas", IncidentSeverity.MEDIUM,
-                        IncidentStatus.RESOLVED, now.minusHours(18), now.minusHours(17), false),
+                        IncidentStatus.RESOLVED, now.minusHours(18), now.minusHours(17), false,
+                        "O gateway apresentou HTTP 503 durante uma janela curta e normalizou sem perda de reservas."),
                 incident(logiTrack, "Latência elevada no rastreamento", IncidentSeverity.HIGH,
-                        IncidentStatus.INVESTIGATING, now.minusHours(3), null, false),
+                        IncidentStatus.INVESTIGATING, now.minusHours(3), null, false,
+                        "O p95 excedeu 800 ms em consultas de rastreamento. A equipe investiga saturação no serviço de rotas."),
                 incident(finance, "Falhas intermitentes na conciliação", IncidentSeverity.MEDIUM,
-                        IncidentStatus.OPEN, now.minusHours(7), null, false),
-                incident(auditor, "Automated availability incident", IncidentSeverity.CRITICAL,
-                        IncidentStatus.OPEN, now.minusMinutes(55), null, true),
+                        IncidentStatus.OPEN, now.minusHours(7), null, false,
+                        "Três respostas HTTP 503 foram observadas no processamento em staging; não há impacto em produção."),
+                incident(auditor, "Indisponibilidade após deploy 2.4.9", IncidentSeverity.CRITICAL,
+                        IncidentStatus.OPEN, now.minusMinutes(25), null, true,
+                        "O release 2.4.9 falhou e foi seguido por três timeouts consecutivos no worker de auditoria."),
                 incident(auditor, "Timeout no pipeline de auditoria", IncidentSeverity.HIGH,
-                        IncidentStatus.RESOLVED, now.minusDays(3), now.minusDays(3).plusMinutes(42), false)
+                        IncidentStatus.RESOLVED, now.minusDays(3), now.minusDays(3).plusMinutes(42), false,
+                        "Uma fila de auditorias excedeu o limite de execução e foi drenada após ajuste de concorrência.")
         ));
     }
 
@@ -203,12 +319,13 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
             IncidentStatus status,
             OffsetDateTime startedAt,
             OffsetDateTime resolvedAt,
-            boolean automatic
+            boolean automatic,
+            String description
     ) {
         Incident incident = new Incident();
         incident.setMonitoredSystem(system);
         incident.setTitle(title);
-        incident.setDescription("Evento demonstrativo com contexto operacional completo para a experiência PulseOps.");
+        incident.setDescription(description);
         incident.setSeverity(severity);
         incident.setStatus(status);
         incident.setStartedAt(startedAt);
@@ -225,14 +342,18 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
             for (int release = 0; release < 4; release++) {
                 Deployment deployment = new Deployment();
                 deployment.setMonitoredSystem(system);
-                deployment.setVersion("2.%d.%d".formatted(systemIndex + 1, 8 - release));
+                boolean correlatedFailure = release == 2 && systemIndex == 3;
+                deployment.setVersion(correlatedFailure ? "2.4.9" : "2.%d.%d".formatted(systemIndex + 1, 8 - release));
                 deployment.setEnvironment(system.getEnvironment());
-                deployment.setStatus(release == 2 && systemIndex == 3
-                        ? DeploymentStatus.FAILED : DeploymentStatus.SUCCESS);
-                deployment.setDeployedAt(now.minusDays(release * 3L + systemIndex).minusHours(systemIndex));
-                deployment.setDurationSeconds(75L + release * 18L + systemIndex * 7L);
+                deployment.setStatus(correlatedFailure ? DeploymentStatus.FAILED : DeploymentStatus.SUCCESS);
+                deployment.setDeployedAt(correlatedFailure
+                        ? now.minusMinutes(70)
+                        : now.minusDays(release * 3L + systemIndex).minusHours(systemIndex));
+                deployment.setDurationSeconds(correlatedFailure ? 142L : 75L + release * 18L + systemIndex * 7L);
                 deployment.setCommitHash("%07x".formatted(0xabc100 + systemIndex * 100 + release));
-                deployment.setDescription("Release automatizado pelo pipeline PulseOps.");
+                deployment.setDescription(correlatedFailure
+                        ? "Pipeline interrompido após regressão no worker; incidente crítico correlacionado automaticamente."
+                        : "Release automatizado e validado pelo pipeline de entrega.");
                 deployments.add(deployment);
             }
         }
@@ -286,7 +407,7 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
 
     private void seedNotifications(User admin) {
         notificationRepository.saveAll(List.of(
-                notification(admin, "Incidente crítico aberto", "AI Web Auditor excedeu o limite de falhas consecutivas.",
+                notification(admin, "Incidente crítico aberto", "AI Web Auditor ficou indisponível após o deploy 2.4.9.",
                         NotificationType.INCIDENT, false),
                 notification(admin, "SLA em risco", "LogiTrack está 0,08% abaixo da meta configurada.",
                         NotificationType.WARNING, false),

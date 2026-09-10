@@ -22,7 +22,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '../auth/AuthContext';
@@ -47,7 +47,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [recoveryNoticeOpen, setRecoveryNoticeOpen] = useState(false);
   const {
-    register,
+    control,
     handleSubmit,
     setValue,
     formState: { errors, isSubmitting },
@@ -132,42 +132,56 @@ export function LoginPage() {
 
           <Box component="form" onSubmit={handleSubmit(submit)} noValidate>
             <Stack spacing={2.1}>
-              <TextField
-                {...register('email')}
-                label="E-mail"
-                placeholder="voce@empresa.com"
-                autoComplete="email"
-                autoFocus
-                error={Boolean(errors.email)}
-                helperText={errors.email?.message}
-                fullWidth
-                InputProps={{
-                  startAdornment: <InputAdornment position="start"><AlternateEmailRoundedIcon fontSize="small" /></InputAdornment>,
-                }}
+              <Controller
+                name="email"
+                control={control}
+                render={({ field: { ref, ...field } }) => (
+                  <TextField
+                    {...field}
+                    inputRef={ref}
+                    label="E-mail"
+                    placeholder="voce@empresa.com"
+                    autoComplete="email"
+                    autoFocus
+                    error={Boolean(errors.email)}
+                    helperText={errors.email?.message}
+                    fullWidth
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start"><AlternateEmailRoundedIcon fontSize="small" /></InputAdornment>,
+                    }}
+                  />
+                )}
               />
-              <TextField
-                {...register('password')}
-                label="Senha"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                error={Boolean(errors.password)}
-                helperText={errors.password?.message}
-                fullWidth
-                InputProps={{
-                  startAdornment: <InputAdornment position="start"><LockOutlinedIcon fontSize="small" /></InputAdornment>,
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword((value) => !value)}
-                        edge="end"
-                        aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                        aria-pressed={showPassword}
-                      >
-                        {showPassword ? <VisibilityOffRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
+              <Controller
+                name="password"
+                control={control}
+                render={({ field: { ref, ...field } }) => (
+                  <TextField
+                    {...field}
+                    inputRef={ref}
+                    label="Senha"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    error={Boolean(errors.password)}
+                    helperText={errors.password?.message}
+                    fullWidth
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start"><LockOutlinedIcon fontSize="small" /></InputAdornment>,
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword((value) => !value)}
+                            edge="end"
+                            aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                            aria-pressed={showPassword}
+                          >
+                            {showPassword ? <VisibilityOffRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
               />
               <Stack direction="row" alignItems="center" justifyContent="space-between">
                 <FormControlLabel

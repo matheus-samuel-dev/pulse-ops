@@ -5,6 +5,7 @@ import com.pulseops.security.JwtProperties;
 import com.pulseops.security.CorsProperties;
 import com.pulseops.security.RestAccessDeniedHandler;
 import com.pulseops.security.RestAuthenticationEntryPoint;
+import com.pulseops.security.DemoModeProperties;
 import com.pulseops.security.outbound.OutboundUrlSecurityProperties;
 import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -26,7 +27,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableMethodSecurity
-@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, OutboundUrlSecurityProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, OutboundUrlSecurityProperties.class,
+        DemoModeProperties.class})
 public class SecurityConfig {
 
     @Bean

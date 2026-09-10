@@ -40,9 +40,9 @@ function buildTheme(mode: PaletteMode) {
       h2: { fontSize: '1.25rem', fontWeight: 650, letterSpacing: '-0.025em' },
       h3: { fontSize: '1rem', fontWeight: 650 },
       button: { fontWeight: 650, textTransform: 'none', letterSpacing: '-0.01em' },
-      body1: { fontSize: '0.925rem' },
-      body2: { fontSize: '0.82rem' },
-      caption: { fontSize: '0.72rem', letterSpacing: '0.015em' },
+      body1: { fontSize: '0.95rem' },
+      body2: { fontSize: '0.85rem' },
+      caption: { fontSize: '0.75rem', letterSpacing: '0.012em' },
     },
     shape: { borderRadius: 12 },
     components: {
@@ -89,6 +89,14 @@ function buildTheme(mode: PaletteMode) {
           tooltip: {
             backgroundColor: dark ? '#18253a' : '#1c2b42',
             fontSize: '0.72rem',
+          },
+        },
+      },
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            margin: 16,
+            maxHeight: 'calc(100% - 32px)',
           },
         },
       },

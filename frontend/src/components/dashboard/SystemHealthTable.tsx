@@ -40,7 +40,15 @@ export function SystemHealthTable({ systems }: { systems: SystemHealth[] }) {
           {systems.length} {systems.length === 1 ? 'sistema monitorado' : 'sistemas monitorados'}
         </Typography>
       </Stack>
-      <TableContainer>
+      <Stack spacing={1.1} p={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
+        {systems.map((system) => (
+          <Box key={system.id} component="button" type="button" onClick={() => navigate(`/sistemas/${system.id}`)} sx={{ appearance: 'none', color: 'text.primary', textAlign: 'left', font: 'inherit', width: '100%', p: 1.6, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'transparent', cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}>
+            <Stack direction="row" justifyContent="space-between" gap={1} alignItems="flex-start"><Box><Typography variant="body2" fontWeight={700}>{system.name}</Typography><Typography variant="caption" color="text.secondary">{environmentLabels[system.environment]}</Typography></Box><SystemStatusChip status={system.status} /></Stack>
+            <Box display="grid" gridTemplateColumns="repeat(2,minmax(0,1fr))" gap={1.2} mt={1.5}><MobileMetric label="Uptime" value={formatPercent(system.uptime)} /><MobileMetric label="Latência" value={formatLatency(system.latencyMs)} /><MobileMetric label="Último check" value={formatRelativeTime(system.lastCheckedAt)} /><MobileMetric label="Amostras" value={`${system.sparkline.length} recentes`} /></Box>
+          </Box>
+        ))}
+      </Stack>
+      <TableContainer sx={{ display: { xs: 'none', md: 'block' } }}>
         <Table sx={{ minWidth: 760 }} aria-label="Saúde dos sistemas monitorados">
           <TableHead>
             <TableRow>
@@ -142,4 +150,8 @@ export function SystemHealthTable({ systems }: { systems: SystemHealth[] }) {
       </TableContainer>
     </Panel>
   );
+}
+
+function MobileMetric({ label, value }: { label: string; value: string }) {
+  return <Box minWidth={0}><Typography variant="caption" color="text.secondary" display="block">{label}</Typography><Typography variant="body2" fontWeight={650} noWrap>{value}</Typography></Box>;
 }

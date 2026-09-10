@@ -30,6 +30,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { useAuth } from '../auth/AuthContext';
+import { isDemoMode } from '../config/demo';
 import { PageHeader } from '../components/common/PageHeader';
 import { Panel } from '../components/common/Panel';
 import { ViewState } from '../components/common/ViewState';
@@ -53,7 +54,7 @@ type IncidentForm = z.infer<typeof incidentSchema>;
 
 export function IncidentsPage() {
   const { user } = useAuth();
-  const canManage = user?.role === 'ADMIN' || user?.role === 'DEVELOPER';
+  const canManage = !isDemoMode && (user?.role === 'ADMIN' || user?.role === 'DEVELOPER');
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [systems, setSystems] = useState<MonitoredSystem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,13 +136,19 @@ export function IncidentsPage() {
       ))}</Stack>}
 
       <Drawer anchor="right" open={Boolean(selected)} onClose={() => setSelected(null)} PaperProps={{ sx: { width: { xs: '100%', sm: 480 }, p: 3 } }}>
-        {selected && <><Stack direction="row" justifyContent="space-between" alignItems="flex-start"><Box><Typography variant="caption" color="error.main" fontWeight={750}>{severityLabel[selected.severity].toUpperCase()}</Typography><Typography variant="h2" mt={.5}>{selected.title}</Typography><Typography color="text.secondary" variant="body2" mt={.6}>{selected.systemName}</Typography></Box><IconButton aria-label="Fechar detalhes" onClick={() => setSelected(null)}><CloseRoundedIcon /></IconButton></Stack><Divider sx={{ my: 3 }}/><Typography variant="body2" color="text.secondary" lineHeight={1.75}>{selected.description || 'Sem descrição adicional.'}</Typography><Typography variant="h3" mt={4} mb={2}>Linha do tempo</Typography><TimelinePoint title="Incidente detectado" time={selected.startedAt} active /><TimelinePoint title="Registro criado" time={selected.createdAt} />{selected.status === 'INVESTIGATING' && <TimelinePoint title="Em investigação" time={selected.createdAt} active />}{selected.resolvedAt && <TimelinePoint title="Operação normalizada" time={selected.resolvedAt} active />}
+        {selected && <><Stack direction="row" justifyContent="space-between" alignItems="flex-start"><Box><Typography variant="caption" color="error.main" fontWeight={750}>{severityLabel[selected.severity].toUpperCase()}</Typography><Typography variant="h2" mt={.5}>{selected.title}</Typography><Typography color="text.secondary" variant="body2" mt={.6}>{selected.systemName}</Typography><Typography color="text.secondary" variant="caption" display="block" mt={.5}>Origem: {selected.automatic ? 'PulseOps Automation' : 'Equipe de Operações'}</Typography></Box><IconButton aria-label="Fechar detalhes" onClick={() => setSelected(null)}><CloseRoundedIcon /></IconButton></Stack><Divider sx={{ my: 3 }}/><Typography variant="body2" color="text.secondary" lineHeight={1.75}>{selected.description || 'Sem descrição adicional.'}</Typography><Typography variant="h3" mt={4} mb={2}>Linha do tempo</Typography><TimelinePoint title="Incidente detectado" time={selected.startedAt} active /><TimelinePoint title="Registro criado" time={registrationTime(selected)} />{selected.status === 'INVESTIGATING' && <TimelinePoint title="Em investigação" time={registrationTime(selected)} active />}{selected.resolvedAt && <TimelinePoint title="Operação normalizada" time={selected.resolvedAt} active />}
           {canManage && selected.status !== 'RESOLVED' && <Stack direction="row" gap={1} mt={4}>{selected.status === 'OPEN' && <Button variant="outlined" onClick={() => void transition(selected, 'investigate')}>Investigar</Button>}<Button variant="contained" color="success" onClick={() => void transition(selected, 'resolve')}>Resolver incidente</Button></Stack>}</>}
       </Drawer>
       <IncidentCreateDialog open={createOpen} systems={systems} onClose={() => setCreateOpen(false)} onCreate={create} onError={(message) => setNotice(message)} />
       <Snackbar open={Boolean(notice)} autoHideDuration={4200} onClose={() => setNotice(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}><Alert variant="filled" severity={notice?.includes('registrado') || notice?.includes('resolvido') || notice?.includes('iniciada') ? 'success' : 'error'} onClose={() => setNotice(null)}>{notice}</Alert></Snackbar>
     </Box>
   );
+}
+
+function registrationTime(incident: Incident) {
+  return new Date(incident.createdAt).getTime() < new Date(incident.startedAt).getTime()
+    ? incident.startedAt
+    : incident.createdAt;
 }
 
 function TimelinePoint({ title, time, active }: { title: string; time: string; active?: boolean }) {

@@ -22,18 +22,23 @@ import { useAuth } from '../auth/AuthContext';
 import { PageHeader } from '../components/common/PageHeader';
 import { Panel } from '../components/common/Panel';
 import { ViewState } from '../components/common/ViewState';
-import { environmentLabels } from '../components/dashboard/dashboardFormatters';
+import { environmentLabels, formatLatency, formatPercent, formatRelativeTime } from '../components/dashboard/dashboardFormatters';
 import { SystemStatusChip } from '../components/dashboard/SystemStatusChip';
 import { SystemFormDialog } from '../components/systems/SystemFormDialog';
 import { getApiErrorMessage } from '../services/api';
 import { systemsService } from '../services/systemsService';
-import type { Environment, MonitoredSystem, MonitoredSystemInput, SystemStatus } from '../types/api';
+import { getDashboard } from '../services/dashboardService';
+import { qualityService } from '../services/qualityService';
+import { isDemoMode } from '../config/demo';
+import type { Environment, MonitoredSystem, MonitoredSystemInput, QualityReport, SystemHealth, SystemStatus } from '../types/api';
 
 export function SystemsPage() {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [systems, setSystems] = useState<MonitoredSystem[]>([]);
+  const [health, setHealth] = useState<Map<string, SystemHealth>>(new Map());
+  const [quality, setQuality] = useState<Map<string, QualityReport>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -44,7 +49,14 @@ export function SystemsPage() {
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
-    try { setSystems(await systemsService.list()); } catch (requestError) { setError(getApiErrorMessage(requestError)); }
+    try {
+      const [systemData, dashboard, qualityData] = await Promise.all([
+        systemsService.list(), getDashboard({ period: '24h', environment: 'ALL' }), qualityService.overview(),
+      ]);
+      setSystems(systemData);
+      setHealth(new Map(dashboard.health.map((item) => [item.id, item])));
+      setQuality(new Map(qualityData.systems.map((item) => [item.systemId, item])));
+    } catch (requestError) { setError(getApiErrorMessage(requestError)); }
     finally { setLoading(false); }
   }, []);
 
@@ -67,7 +79,7 @@ export function SystemsPage() {
   return (
     <Box px={{ xs: 2, sm: 3, xl: 4 }} py={{ xs: 2.5, md: 3.5 }} maxWidth={1680} mx="auto">
       <PageHeader title="Sistemas" description="Aplicações, APIs e serviços acompanhados pelo PulseOps" eyebrow="Observabilidade"
-        actions={user?.role === 'ADMIN' && <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)}>Cadastrar sistema</Button>} />
+        actions={user?.role === 'ADMIN' && !isDemoMode && <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)}>Cadastrar sistema</Button>} />
       <Panel sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.25}>
           <TextField size="small" placeholder="Buscar por nome, descrição ou URL" value={query} onChange={(event) => setQuery(event.target.value)} sx={{ flex: 1 }}
@@ -93,7 +105,7 @@ export function SystemsPage() {
               sx={{ p: 2.4, cursor: 'pointer', '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 16px 34px rgba(0,0,0,.16)' } }}>
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                 <Box width={42} height={42} display="grid" sx={{ placeItems: 'center', borderRadius: 2.5, bgcolor: alpha(theme.palette.primary.main,.1), color: 'primary.light', fontWeight: 800 }}>{system.name.slice(0,2).toUpperCase()}</Box>
-                <SystemStatusChip status={system.status} />
+                <SystemStatusChip status={system.status} active={system.active} />
               </Stack>
               <Typography variant="h2" mt={2}>{system.name}</Typography>
               <Typography color="text.secondary" variant="body2" mt={0.7} minHeight={42}>{system.description || 'Sem descrição cadastrada.'}</Typography>
@@ -102,7 +114,13 @@ export function SystemsPage() {
                 <Chip size="small" variant="outlined" label={`SLA ${system.targetAvailability}%`} />
                 {!system.active && <Chip size="small" color="default" label="Pausado" />}
               </Stack>
-              <Stack direction="row" alignItems="center" justifyContent="space-between" mt={2.2} pt={1.7} borderTop="1px solid" borderColor="divider">
+              <Box display="grid" gridTemplateColumns="repeat(2,minmax(0,1fr))" gap={1.2} mt={2}>
+                <SystemMetric label="Uptime · 24h" value={formatPercent(health.get(system.id)?.uptime ?? 0)} />
+                <SystemMetric label="Latência" value={formatLatency(health.get(system.id)?.latencyMs ?? null)} />
+                <SystemMetric label="Cobertura" value={quality.has(system.id) ? formatPercent(quality.get(system.id)!.coverageScore) : '—'} />
+                <SystemMetric label="Último check" value={formatRelativeTime(health.get(system.id)?.lastCheckedAt ?? null)} />
+              </Box>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" mt={1.8} pt={1.5} borderTop="1px solid" borderColor="divider">
                 <Typography variant="caption" color="text.secondary" noWrap maxWidth="78%">{system.baseUrl}</Typography>
                 <ArrowForwardRoundedIcon fontSize="small" color="primary" />
               </Stack>
@@ -116,4 +134,8 @@ export function SystemsPage() {
       </Snackbar>
     </Box>
   );
+}
+
+function SystemMetric({ label, value }: { label: string; value: string }) {
+  return <Box minWidth={0}><Typography variant="caption" color="text.secondary" display="block">{label}</Typography><Typography variant="body2" fontWeight={680} noWrap mt={.2}>{value}</Typography></Box>;
 }

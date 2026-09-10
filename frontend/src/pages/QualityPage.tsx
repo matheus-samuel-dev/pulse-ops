@@ -60,7 +60,7 @@ export function QualityPage() {
   }));
 
   return <Box px={{ xs: 2, sm: 3, xl: 4 }} py={{ xs: 2.5, md: 3.5 }} maxWidth={1580} mx="auto">
-    <PageHeader title="Qualidade" description="Evidências de testes automatizados e evolução de cobertura" eyebrow="Quality First"
+    <PageHeader title="Qualidade" description="Evidências de testes e score técnico: 60% linhas + 40% branches" eyebrow="Quality First"
       actions={<TextField select size="small" label="Histórico" value={period} onChange={(event) => setPeriod(event.target.value)} sx={{ minWidth: 170 }}><MenuItem value="24h">24 horas</MenuItem><MenuItem value="7d">7 dias</MenuItem><MenuItem value="30d">30 dias</MenuItem><MenuItem value="all">Todo histórico</MenuItem></TextField>} />
     {loading && <><Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(2,1fr)', xl: 'repeat(5,1fr)' }} gap={2}>{[1,2,3,4,5].map((item) => <Skeleton key={item} variant="rounded" height={135}/>)}</Box><Skeleton variant="rounded" height={360} sx={{ mt: 2 }}/></>}
     {!loading && error && <ViewState kind="error" title="Falha ao carregar qualidade" description={error} actionLabel="Tentar novamente" onAction={() => void load()} />}

@@ -1,0 +1,12 @@
+{
+  "name": "PulseOps · Observability Platform",
+  "short_name": "PulseOps",
+  "description": "Plataforma de observabilidade, operações e qualidade de software.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07101f",
+  "theme_color": "#07101f",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

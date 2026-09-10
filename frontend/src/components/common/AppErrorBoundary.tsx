@@ -13,7 +13,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('Falha não recuperável na interface do PulseOps', error, info);
+    if (import.meta.env.DEV) console.error('Falha não recuperável na interface do PulseOps', error, info);
   }
 
   render() {

@@ -14,6 +14,7 @@ public record OperationalEventResponse(
         String title,
         String description,
         String status,
-        OperationalEventImpact impact
+        OperationalEventImpact impact,
+        String source
 ) {
 }

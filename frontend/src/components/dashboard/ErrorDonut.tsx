@@ -36,7 +36,10 @@ export function ErrorDonut({ data }: { data: ErrorBreakdown }) {
             >
               {displayEntries.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
             </Pie>
-            {data.total > 0 && <Tooltip />}
+            {data.total > 0 && <Tooltip
+              contentStyle={{ background: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, borderRadius: 10, boxShadow: '0 12px 30px rgba(0,0,0,.18)', fontSize: 12 }}
+              formatter={(value, name) => [`${Number(value).toLocaleString('pt-BR')} evento(s)`, String(name)]}
+            />}
           </PieChart>
         </ResponsiveContainer>
         <Stack
