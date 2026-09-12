@@ -143,7 +143,7 @@ class WebClientHealthCheckClientTest {
         when(exchangeFunction.exchange(any(ClientRequest.class)))
                 .thenReturn(Mono.error(new IllegalStateException("Request timed out waiting for response")));
 
-        HealthProbeResult result = client.probe(system("https://slow.example.com", "/health", 1000));
+        HealthProbeResult result = client.probe(system("https://slow.example.com", "/health", 5000));
 
         assertThat(result.failureType()).isEqualTo(ProbeFailureType.TIMEOUT);
         assertThat(result.errorMessage()).containsIgnoringCase("timed out");
@@ -203,6 +203,6 @@ class WebClientHealthCheckClientTest {
                 : rawBaseUrl;
         String endpoint = rawEndpoint.startsWith("/") ? rawEndpoint : "/" + rawEndpoint;
         URI target = URI.create(baseUrl + "/").resolve(endpoint.substring(1));
-        return new ValidatedMonitoredUrl(baseUrl, endpoint, target);
+        return new ValidatedMonitoredUrl(baseUrl, endpoint, target, java.util.List.of());
     }
 }

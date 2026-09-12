@@ -1,0 +1,214 @@
+[
+  {
+    "path": "README.md",
+    "change": "modified"
+  },
+  {
+    "path": "docker-compose.yml",
+    "change": "modified"
+  },
+  {
+    "path": ".env.example",
+    "change": "modified"
+  },
+  {
+    "path": "frontend/nginx.conf",
+    "change": "modified"
+  },
+  {
+    "path": "docs/integrations.md",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/layout/AppShell.tsx",
+    "change": "modified"
+  },
+  {
+    "path": "frontend/src/test/integrationFixtures.ts",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/App.tsx",
+    "change": "modified"
+  },
+  {
+    "path": "frontend/src/pages/IntegrationsPage.tsx",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/pages/IntegrationsPage.test.tsx",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/types/integrations.ts",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/services/integrationsService.ts",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/resources/application.yml",
+    "change": "modified"
+  },
+  {
+    "path": "backend/src/main/resources/db/migration/V3__index_integration_report_receipts.sql",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/controller/IntegrationController.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/repository/TestReportRepository.java",
+    "change": "modified"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/repository/HealthCheckRepository.java",
+    "change": "modified"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/config/SecurityConfig.java",
+    "change": "modified"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/config/IntegrationProperties.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/client/WebClientHealthCheckClient.java",
+    "change": "modified"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/security/outbound/ValidatedMonitoredUrl.java",
+    "change": "modified"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/security/outbound/PinnedAddressResolverGroup.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/security/outbound/MonitoredUrlPolicy.java",
+    "change": "modified"
+  },
+  {
+    "path": "backend/src/test/java/com/pulseops/service/MonitoredSystemServiceTest.java",
+    "change": "modified"
+  },
+  {
+    "path": "frontend/src/components/integrations/useIntegrationResource.ts",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/components/integrations/useIntegrationResource.test.tsx",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/components/integrations/IntegrationSpotlight.tsx",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/components/integrations/IntegrationPrimitives.tsx",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/components/integrations/integrationPresentation.ts",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/components/integrations/IntegrationMap.tsx",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/components/integrations/IntegrationList.tsx",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/components/integrations/IntegrationDetails.tsx",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/components/integrations/IntegrationActivity.tsx",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/components/integrations/filterIntegrations.ts",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/components/integrations/filterIntegrations.test.ts",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/service/integration/IntegrationStatusMapper.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/service/integration/IntegrationService.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/service/integration/IntegrationCheckService.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/service/integration/IntegrationCatalog.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/service/integration/IntegrationActivityService.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/test/java/com/pulseops/service/integration/IntegrationStatusMapperTest.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/test/java/com/pulseops/service/integration/IntegrationServiceTest.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/test/java/com/pulseops/service/integration/IntegrationCheckServiceTest.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/test/java/com/pulseops/service/integration/IntegrationActivityServiceTest.java",
+    "change": "created"
+  },
+  {
+    "path": "frontend/src/components/dashboard/SystemStatusChip.tsx",
+    "change": "modified"
+  },
+  {
+    "path": "backend/src/test/java/com/pulseops/integration/PostgreSqlRepositoryIntegrationTest.java",
+    "change": "modified"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/dto/integration/IntegrationResponse.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/dto/integration/IntegrationOverviewResponse.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/main/java/com/pulseops/dto/integration/IntegrationCheckResponse.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/test/java/com/pulseops/controller/IntegrationControllerTest.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/test/java/com/pulseops/client/WebClientHealthCheckNetworkTest.java",
+    "change": "created"
+  },
+  {
+    "path": "backend/src/test/java/com/pulseops/client/WebClientHealthCheckClientTest.java",
+    "change": "modified"
+  },
+  {
+    "path": "backend/src/test/java/com/pulseops/security/outbound/PinnedAddressResolverGroupTest.java",
+    "change": "created"
+  }
+]

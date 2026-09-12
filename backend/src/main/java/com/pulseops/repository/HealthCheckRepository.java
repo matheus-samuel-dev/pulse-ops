@@ -13,6 +13,17 @@ import org.springframework.data.repository.query.Param;
 
 public interface HealthCheckRepository extends JpaRepository<HealthCheck, UUID> {
 
+    java.util.Optional<HealthCheck> findFirstByMonitoredSystemIdOrderByCheckedAtDesc(UUID systemId);
+
+    java.util.Optional<HealthCheck> findFirstByMonitoredSystemIdAndSuccessFalseOrderByCheckedAtDesc(UUID systemId);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "monitoredSystem")
+    List<HealthCheck> findByMonitoredSystemIdInAndCheckedAtBetweenOrderByCheckedAtDesc(
+            List<UUID> systemIds, OffsetDateTime start, OffsetDateTime end, Pageable pageable);
+
+    long countByMonitoredSystemIdInAndCheckedAtGreaterThanEqualAndCheckedAtLessThan(
+            List<UUID> systemIds, OffsetDateTime start, OffsetDateTime end);
+
     List<HealthCheck> findAllByCheckedAtBetweenOrderByCheckedAtAsc(
             OffsetDateTime start,
             OffsetDateTime end

@@ -14,6 +14,15 @@ import org.springframework.data.repository.query.Param;
 
 public interface TestReportRepository extends JpaRepository<TestReport, UUID> {
 
+    Optional<TestReport> findFirstByMonitoredSystemIdOrderByCreatedAtDesc(UUID systemId);
+
+    @EntityGraph(attributePaths = "monitoredSystem")
+    List<TestReport> findByMonitoredSystemIdInAndCreatedAtBetweenOrderByCreatedAtDesc(
+            List<UUID> systemIds, OffsetDateTime start, OffsetDateTime end, Pageable pageable);
+
+    long countByMonitoredSystemIdInAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+            List<UUID> systemIds, OffsetDateTime start, OffsetDateTime end);
+
     Optional<TestReport> findFirstByMonitoredSystemIdOrderByGeneratedAtDesc(UUID monitoredSystemId);
 
     List<TestReport> findByMonitoredSystemIdOrderByGeneratedAtDesc(UUID monitoredSystemId);

@@ -1,0 +1,66 @@
+[
+  {
+    "width": 1920,
+    "mapNodes": 6,
+    "overflowElements": [],
+    "scroll": 1912,
+    "table": true,
+    "viewport": 1912
+  },
+  {
+    "width": 1440,
+    "mapNodes": 6,
+    "overflowElements": [],
+    "scroll": 1432,
+    "table": true,
+    "viewport": 1432
+  },
+  {
+    "width": 1280,
+    "mapNodes": 6,
+    "overflowElements": [],
+    "scroll": 1272,
+    "table": true,
+    "viewport": 1272
+  },
+  {
+    "width": 1024,
+    "mapNodes": 6,
+    "overflowElements": [],
+    "scroll": 1016,
+    "table": true,
+    "viewport": 1016
+  },
+  {
+    "width": 768,
+    "mapNodes": 6,
+    "overflowElements": [],
+    "scroll": 760,
+    "table": false,
+    "viewport": 760
+  },
+  {
+    "width": 430,
+    "mapNodes": 6,
+    "overflowElements": [],
+    "scroll": 422,
+    "table": false,
+    "viewport": 422
+  },
+  {
+    "width": 390,
+    "mapNodes": 6,
+    "overflowElements": [],
+    "scroll": 382,
+    "table": false,
+    "viewport": 382
+  },
+  {
+    "width": 360,
+    "mapNodes": 6,
+    "overflowElements": [],
+    "scroll": 352,
+    "table": false,
+    "viewport": 352
+  }
+]

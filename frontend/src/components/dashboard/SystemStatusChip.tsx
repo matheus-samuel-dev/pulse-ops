@@ -11,14 +11,14 @@ const statusColors: Record<SystemStatus, 'success' | 'warning' | 'error' | 'defa
   UNKNOWN: 'default',
 };
 
-export function SystemStatusChip({ status, active = true }: { status: SystemStatus; active?: boolean }) {
+export function SystemStatusChip({ status, active = true, label }: { status: SystemStatus; active?: boolean; label?: string }) {
   return (
     <Chip
       size="small"
       color={active ? statusColors[status] : 'default'}
       variant="outlined"
       icon={active ? <FiberManualRecordRoundedIcon /> : <PauseCircleOutlineRoundedIcon />}
-      label={active ? statusLabels[status] : 'Manutenção'}
+      label={label ?? (active ? statusLabels[status] : 'Manutenção')}
       sx={{
         height: 25,
         borderRadius: 1.5,

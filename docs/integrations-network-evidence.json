@@ -1,0 +1,127 @@
+[
+  {
+    "method": "GET",
+    "path": "/integracoes",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/assets/index-CJlx9tu_.js",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/assets/IntegrationsPage-DFqMk-7a.js",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/favicon.svg",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/events",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/events",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/ai-web-auditor",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/ai-web-auditor/events",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/events",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/integrations",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/events",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/events",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/events",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/events",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/events",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations",
+    "status": 200
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/events",
+    "status": 200
+  }
+]

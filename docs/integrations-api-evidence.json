@@ -1,0 +1,74 @@
+{
+  "environment": "Isolated QA database and local HTTP targets, not live external applications",
+  "checkedAt": "2026-09-11T12:06:52.5277697-03:00",
+  "checks": [
+    {
+      "integrationId": "ai-web-auditor",
+      "status": "OFFLINE",
+      "responseTimeMs": 10654,
+      "checkedAt": "2026-09-11T15:06:47.325426223Z",
+      "message": "Falha de comunicação; o serviço não respondeu ao health check",
+      "cached": false,
+      "nextCheckAt": "2026-09-11T15:07:47.325426223Z"
+    },
+    {
+      "integrationId": "helpdesk",
+      "status": "OFFLINE",
+      "responseTimeMs": 2654,
+      "checkedAt": "2026-09-11T15:06:50.634008977Z",
+      "message": "Falha de comunicação; o serviço não respondeu ao health check",
+      "cached": false,
+      "nextCheckAt": "2026-09-11T15:07:50.634008977Z"
+    },
+    {
+      "integrationId": "arena-predict",
+      "status": "ATTENTION",
+      "responseTimeMs": 669,
+      "checkedAt": "2026-09-11T15:06:51.490645015Z",
+      "message": "Resposta HTTP inesperada: 401",
+      "cached": false,
+      "nextCheckAt": "2026-09-11T15:07:51.490645015Z"
+    }
+  ],
+  "cached": {
+    "integrationId": "ai-web-auditor",
+    "status": "OFFLINE",
+    "responseTimeMs": 10654,
+    "checkedAt": "2026-09-11T15:06:47.325426Z",
+    "message": "Falha de comunicação; o serviço não respondeu ao health check",
+    "cached": true,
+    "nextCheckAt": "2026-09-11T15:07:47.325426Z"
+  },
+  "syncUnchangedByHealthCheck": true,
+  "reportHttp": 201,
+  "reportReceipt": "2026-09-11T15:06:52.256156Z",
+  "unconfiguredHttp": 422,
+  "recentEventTypes": [
+    "QUALITY",
+    "HEALTH_CHECK"
+  ],
+  "finalBrowserCheck": {
+    "integrationId": "ai-web-auditor",
+    "status": "ATTENTION",
+    "responseTimeMs": 1090,
+    "checkedAt": "2026-09-11T20:07:54.720344Z",
+    "message": "Conexão realizada com sucesso",
+    "cached": true,
+    "nextCheckAt": "2026-09-11T20:08:54.720344Z"
+  },
+  "recoveryCheck": {
+    "integrationId": "ai-web-auditor",
+    "status": "ATTENTION",
+    "responseTimeMs": 59,
+    "checkedAt": "2026-09-11T20:11:50.774866543Z",
+    "message": "Conexão realizada com sucesso",
+    "cached": false,
+    "nextCheckAt": "2026-09-11T20:12:50.774866543Z"
+  },
+  "finalOffline": {
+    "id": "helpdesk",
+    "status": "OFFLINE",
+    "responseTimeMs": 61,
+    "errorsLast24h": 3
+  }
+}

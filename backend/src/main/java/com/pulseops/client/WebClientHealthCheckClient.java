@@ -5,6 +5,8 @@ import com.pulseops.dto.monitoring.HealthProbeResult;
 import com.pulseops.dto.monitoring.ProbeFailureType;
 import com.pulseops.exception.UnsafeMonitoredUrlException;
 import com.pulseops.security.outbound.MonitoredUrlPolicy;
+import com.pulseops.security.outbound.PinnedAddressResolverGroup;
+import com.pulseops.security.outbound.ValidatedMonitoredUrl;
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -12,18 +14,21 @@ import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.TimeoutException;
 import org.springframework.stereotype.Component;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.netty.http.client.HttpClient;
 
 @Component
 public class WebClientHealthCheckClient implements HealthCheckClient {
 
-    private final WebClient webClient;
+    private final WebClient.Builder builder;
     private final MonitoredUrlPolicy monitoredUrlPolicy;
 
     public WebClientHealthCheckClient(WebClient.Builder builder, MonitoredUrlPolicy monitoredUrlPolicy) {
-        this.webClient = builder.build();
+        this.builder = builder.clone();
         this.monitoredUrlPolicy = monitoredUrlPolicy;
     }
 
@@ -31,9 +36,10 @@ public class WebClientHealthCheckClient implements HealthCheckClient {
     public HealthProbeResult probe(MonitoredSystem monitoredSystem) {
         long startedAt = System.nanoTime();
         try {
-            Integer status = webClient.get()
-                    .uri(resolveHealthUri(monitoredSystem))
-                    .exchangeToMono(response -> Mono.just(response.statusCode().value()))
+            Integer status = Mono.fromCallable(() -> monitoredUrlPolicy.validate(
+                            monitoredSystem.getBaseUrl(), monitoredSystem.getHealthEndpoint()))
+                    .subscribeOn(Schedulers.boundedElastic())
+                    .flatMap(this::request)
                     .timeout(Duration.ofMillis(monitoredSystem.getTimeoutMs()))
                     .block();
             long elapsed = elapsedMillis(startedAt);
@@ -55,6 +61,15 @@ public class WebClientHealthCheckClient implements HealthCheckClient {
 
     URI resolveHealthUri(MonitoredSystem system) {
         return monitoredUrlPolicy.validate(system.getBaseUrl(), system.getHealthEndpoint()).targetUri();
+    }
+
+    private Mono<Integer> request(ValidatedMonitoredUrl target) {
+        PinnedAddressResolverGroup resolver = new PinnedAddressResolverGroup(target);
+        HttpClient transport = HttpClient.newConnection().resolver(resolver).followRedirect(false);
+        return builder.clone().clientConnector(new ReactorClientHttpConnector(transport)).build()
+                .get().uri(target.targetUri())
+                .exchangeToMono(response -> Mono.just(response.statusCode().value()))
+                .doFinally(signal -> resolver.close());
     }
 
     private ProbeFailureType classify(Throwable root, RuntimeException exception) {

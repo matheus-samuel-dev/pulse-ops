@@ -15,6 +15,7 @@ const AlertsPage = lazy(() => import('./pages/AlertsPage').then((module) => ({ d
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((module) => ({ default: module.ReportsPage })));
 const AuditPage = lazy(() => import('./pages/AuditPage').then((module) => ({ default: module.AuditPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
+const IntegrationsPage = lazy(() => import('./pages/IntegrationsPage').then((module) => ({ default: module.IntegrationsPage })));
 
 export function App() {
   return (
@@ -30,6 +31,8 @@ export function App() {
             <Route path="incidentes" element={<IncidentsPage />} />
             <Route path="deploys" element={<DeploymentsPage />} />
             <Route path="qualidade" element={<QualityPage />} />
+            <Route path="integracoes" element={<IntegrationsPage />} />
+            <Route path="integrations" element={<Navigate to="/integracoes" replace />} />
             <Route path="alertas" element={<AlertsPage />} />
             <Route path="relatorios" element={<ReportsPage />} />
             <Route path="auditoria" element={<AuditPage />} />

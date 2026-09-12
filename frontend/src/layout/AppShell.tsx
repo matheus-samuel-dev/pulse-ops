@@ -22,6 +22,7 @@ import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
 import ReportProblemRoundedIcon from '@mui/icons-material/ReportProblemRounded';
 import RocketLaunchRoundedIcon from '@mui/icons-material/RocketLaunchRounded';
 import ScienceRoundedIcon from '@mui/icons-material/ScienceRounded';
+import HubRoundedIcon from '@mui/icons-material/HubRounded';
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
 import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
@@ -56,6 +57,7 @@ const navigation: NavigationItem[] = [
   { label: 'Incidentes', path: '/incidentes', icon: ReportProblemRoundedIcon, available: true },
   { label: 'Deploys', path: '/deploys', icon: RocketLaunchRoundedIcon, available: true },
   { label: 'Qualidade', path: '/qualidade', icon: ScienceRoundedIcon, available: true },
+  { label: 'Integrações', path: '/integracoes', icon: HubRoundedIcon, available: true },
   { label: 'Alertas', path: '/alertas', icon: NotificationsNoneRoundedIcon, available: true },
   { label: 'Relatórios', path: '/relatorios', icon: AssessmentRoundedIcon, available: true },
   { label: 'Auditoria', path: '/auditoria', icon: HistoryRoundedIcon, available: true },

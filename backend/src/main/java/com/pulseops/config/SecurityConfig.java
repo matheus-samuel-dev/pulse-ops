@@ -28,7 +28,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableMethodSecurity
 @EnableConfigurationProperties({JwtProperties.class, CorsProperties.class, OutboundUrlSecurityProperties.class,
-        DemoModeProperties.class})
+        DemoModeProperties.class, IntegrationProperties.class})
 public class SecurityConfig {
 
     @Bean

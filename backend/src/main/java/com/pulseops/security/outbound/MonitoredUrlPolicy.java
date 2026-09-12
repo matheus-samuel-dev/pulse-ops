@@ -51,9 +51,8 @@ public class MonitoredUrlPolicy {
         URI baseUri = parseBaseUrl(rawBaseUrl);
         String endpoint = normalizeEndpoint(rawHealthEndpoint);
         URI target = resolveSameOrigin(baseUri, endpoint);
-        validateDestination(target.getHost());
-
-        return new ValidatedMonitoredUrl(canonicalBaseUrl(baseUri), endpoint, target);
+        InetAddress[] addresses = validateDestination(target.getHost());
+        return new ValidatedMonitoredUrl(canonicalBaseUrl(baseUri), endpoint, target, java.util.List.of(addresses));
     }
 
     private URI parseBaseUrl(String rawBaseUrl) {
@@ -165,7 +164,7 @@ public class MonitoredUrlPolicy {
         return value;
     }
 
-    private void validateDestination(String rawHost) {
+    private InetAddress[] validateDestination(String rawHost) {
         String host = canonicalHost(rawHost);
         if (isCloudMetadataHost(host)) {
             throw new UnsafeMonitoredUrlException("Destinos de metadata de nuvem não são permitidos");
@@ -183,6 +182,7 @@ public class MonitoredUrlPolicy {
         for (InetAddress address : addresses) {
             validateAddress(address);
         }
+        return addresses;
     }
 
     private void validateAddress(InetAddress address) {

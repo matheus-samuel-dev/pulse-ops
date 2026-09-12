@@ -248,6 +248,6 @@ class MonitoredSystemServiceTest {
         String endpoint = rawEndpoint.trim();
         endpoint = endpoint.startsWith("/") ? endpoint : "/" + endpoint;
         URI target = URI.create(baseUrl + "/").resolve(endpoint.substring(1));
-        return new ValidatedMonitoredUrl(baseUrl, endpoint, target);
+        return new ValidatedMonitoredUrl(baseUrl, endpoint, target, java.util.List.of());
     }
 }

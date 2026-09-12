@@ -11,9 +11,9 @@ Uma plataforma full stack de observabilidade que conecta saúde operacional, inc
 ![React 19](https://img.shields.io/badge/React-19-0ea5e9?style=for-the-badge&logo=react&logoColor=white)
 ![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-4169e1?style=for-the-badge&logo=postgresql&logoColor=white)
 
-![Tests](https://img.shields.io/badge/backend_tests-269%20passing-16a34a?style=flat-square)
-![Line coverage](https://img.shields.io/badge/line_coverage-89.37%25-7c3aed?style=flat-square)
-![Service coverage](https://img.shields.io/badge/services-93.48%25-7c3aed?style=flat-square)
+![Tests](https://img.shields.io/badge/backend_tests-315%20passing-16a34a?style=flat-square)
+![Line coverage](https://img.shields.io/badge/line_coverage-90.26%25-7c3aed?style=flat-square)
+![Service coverage](https://img.shields.io/badge/services-94.44%25-7c3aed?style=flat-square)
 ![Docker Compose](https://img.shields.io/badge/Docker_Compose-one--command-2496ed?style=flat-square&logo=docker&logoColor=white)
 
 </div>
@@ -51,24 +51,30 @@ O PulseOps foi construído como um produto backend-first: regras operacionais ex
 
 ![Catálogo de sistemas monitorados](docs/screenshots/systems.png)
 
+### Hub de integrações
+
+A área **Integrações** (`/integracoes`, com alias `/integrations`) reúne seis aplicações do ecossistema, destaca o AI Web Auditor e apresenta disponibilidade calculada, saúde, relatórios recebidos, mapa, filtros e testes de conexão pelo backend. Reutiliza os cadastros e históricos existentes, com indicação explícita de ausência de dados e do modo demonstrativo.
+
+Consulte [configuração, contratos e segurança](docs/integrations.md) e o [relatório de validação desta entrega](docs/integrations-delivery.md).
+
 ## Quality First
 
 > [!IMPORTANT]
 > Qualidade é uma capacidade do produto e também uma propriedade do código. O PulseOps mede testes e cobertura dos sistemas monitorados enquanto seu próprio backend é protegido por uma suíte extensa de JUnit 5, Mockito, AssertJ, MockMvc e Testcontainers.
 
-Resultados reais da validação completa de **10/09/2026**, com Docker Desktop ativo:
+Resultados reais da validação completa de **11/09/2026**, com Docker Desktop ativo:
 
 | Indicador | Resultado verificado |
 | --- | ---: |
-| Testes do backend | **269 executados, 269 aprovados** |
+| Testes do backend | **315 executados, 315 aprovados** |
 | Falhos / erros / ignorados | **0 / 0 / 0** |
-| Integração com PostgreSQL 16.14 | **8/8 aprovados** |
-| Cobertura de linhas | **89,37%** — 1.925 de 2.154 |
-| Cobertura de branches | **74,13%** — 662 de 893 |
-| Cobertura da camada de services | **93,48%** |
+| Integração com PostgreSQL 16.14 | **10/10 aprovados** |
+| Cobertura de linhas | **90,26%** — 2.114 de 2.342 |
+| Cobertura de branches | **77,15%** — 790 de 1.024 |
+| Cobertura da camada de services | **94,44%** |
 | Gate JaCoCo | **aprovado** — mínimo global de 85% em linhas |
 
-Os números acima são derivados da execução de `clean verify` neste estado do projeto. O relatório navegável é gerado em `backend/target/site/jacoco/index.html`.
+Os números acima são derivados de `mvn clean verify` após a entrega da área de Integrações. Os detalhes estão no [relatório da feature](docs/integrations-delivery.md). O relatório navegável é gerado em `backend/target/site/jacoco/index.html`.
 
 ## Funcionalidades
 

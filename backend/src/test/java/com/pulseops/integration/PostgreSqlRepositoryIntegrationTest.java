@@ -126,7 +126,7 @@ class PostgreSqlRepositoryIntegrationTest {
                 String.class
         );
 
-        assertThat(successfulVersions).contains("1", "2");
+        assertThat(successfulVersions).contains("1", "2", "3");
         assertThat(tables).contains(
                 "app_users",
                 "monitored_systems",
@@ -140,8 +140,42 @@ class PostgreSqlRepositoryIntegrationTest {
                 "uk_app_users_email_lower",
                 "idx_health_checks_system_checked",
                 "idx_incidents_system_status",
-                "idx_test_reports_system_generated"
+                "idx_test_reports_system_generated",
+                "idx_test_reports_system_created"
         );
+    }
+
+    @Test
+    void integrationQueriesScopeAndLimitHealthEventsAndExcludeTheNextDay() {
+        var bound = monitoredSystemRepository.saveAndFlush(monitoredSystem("Bound", Environment.PRODUCTION, SystemStatus.OPERATIONAL, true));
+        var unrelated = monitoredSystemRepository.saveAndFlush(monitoredSystem("Unrelated", Environment.PRODUCTION, SystemStatus.OPERATIONAL, true));
+        healthCheckRepository.saveAllAndFlush(List.of(
+                healthCheck(bound, REFERENCE_TIME, true, 200, 40),
+                healthCheck(bound, REFERENCE_TIME.plusMinutes(1), false, 503, 50),
+                healthCheck(bound, REFERENCE_TIME.plusDays(1), true, 200, 30),
+                healthCheck(unrelated, REFERENCE_TIME.plusMinutes(2), true, 200, 10)));
+        var ids = List.of(bound.getId());
+        assertThat(healthCheckRepository.countByMonitoredSystemIdInAndCheckedAtGreaterThanEqualAndCheckedAtLessThan(
+                ids, REFERENCE_TIME, REFERENCE_TIME.plusDays(1))).isEqualTo(2);
+        var feed = healthCheckRepository.findByMonitoredSystemIdInAndCheckedAtBetweenOrderByCheckedAtDesc(
+                ids, REFERENCE_TIME, REFERENCE_TIME.plusHours(1), org.springframework.data.domain.PageRequest.of(0, 1));
+        assertThat(feed).hasSize(1);
+        assertThat(feed.getFirst().isSuccess()).isFalse();
+        assertThat(healthCheckRepository.findFirstByMonitoredSystemIdAndSuccessFalseOrderByCheckedAtDesc(bound.getId()))
+                .get().extracting(HealthCheck::getCheckedAt).isEqualTo(REFERENCE_TIME.plusMinutes(1));
+    }
+
+    @Test
+    void integrationReportQueriesUseReceiptTimeInsteadOfGenerationTime() {
+        var bound = monitoredSystemRepository.saveAndFlush(monitoredSystem("Bound", Environment.PRODUCTION, SystemStatus.OPERATIONAL, true));
+        var report = testReportRepository.saveAndFlush(testReport(bound, REFERENCE_TIME.minusDays(20), 1, 1, 0, 0, "90", "85"));
+        jdbcTemplate.update("update test_reports set created_at = ? where id = ?", REFERENCE_TIME, report.getId());
+        var ids = List.of(bound.getId());
+        assertThat(testReportRepository.countByMonitoredSystemIdInAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(ids, REFERENCE_TIME, REFERENCE_TIME.plusDays(1))).isEqualTo(1);
+        assertThat(testReportRepository.findByMonitoredSystemIdInAndCreatedAtBetweenOrderByCreatedAtDesc(ids,
+                REFERENCE_TIME, REFERENCE_TIME.plusHours(1), org.springframework.data.domain.PageRequest.of(0, 12))).hasSize(1);
+        assertThat(testReportRepository.findFirstByMonitoredSystemIdOrderByCreatedAtDesc(bound.getId())).isPresent();
+        assertThat(testReportRepository.countByMonitoredSystemIdInAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(ids, REFERENCE_TIME.minusDays(1), REFERENCE_TIME)).isZero();
     }
 
     @Test

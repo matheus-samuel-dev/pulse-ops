@@ -1,0 +1,25 @@
+{
+  "validatedAt": "2026-09-11T17:12:45.3564094-03:00",
+  "backendTests": 315,
+  "backendFailures": 0,
+  "backendErrors": 0,
+  "backendSkipped": 0,
+  "frontendTests": 29,
+  "frontendFiles": 8,
+  "lineCovered": 2114,
+  "lineTotal": 2342,
+  "lineCoveragePercent": 90.26,
+  "branchCoveragePercent": 77.15,
+  "serviceLineCoveragePercent": 94.44,
+  "requiredLineCoveragePercent": 85,
+  "typescriptBuild": "passed",
+  "lint": "passed without warnings",
+  "dockerConfig": "passed",
+  "dockerBuild": "passed",
+  "dockerServices": [
+    "backend: healthy",
+    "frontend: healthy",
+    "postgres: healthy"
+  ],
+  "productionDependencyVulnerabilities": 0
+}
