@@ -4,5 +4,8 @@ public enum OperationalEventType {
     HEALTH_CHECK,
     INCIDENT,
     DEPLOYMENT,
-    QUALITY
+    QUALITY,
+    SYSTEM,
+    INTEGRATION,
+    ACCOUNT
 }

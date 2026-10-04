@@ -1,0 +1,316 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for src/pages/QualityPage.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/pages</a> QualityPage.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/27</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/16</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/9</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/20</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import ScienceRoundedIcon from '@mui/icons-material/ScienceRounded';
+import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
+import {
+  alpha,
+  Box,
+  Chip,
+  MenuItem,
+  Skeleton,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+  useTheme,
+} from '@mui/material';
+import { useCallback, useEffect, useState } from 'react';
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { PageHeader } from '../components/common/PageHeader';
+import { Panel } from '../components/common/Panel';
+import { ViewState } from '../components/common/ViewState';
+import { formatPercent } from '../components/dashboard/dashboardFormatters';
+import { getApiErrorMessage } from '../services/api';
+import { qualityService } from '../services/qualityService';
+import type { QualityClassification, QualityOverview, QualityReport } from '../types/api';
+&nbsp;
+const classificationLabel: Record&lt;QualityClassification, string&gt; = <span class="cstat-no" title="statement not covered" >{ EXCELLENT: 'Excelente', GOOD: 'Boa', WARNING: 'Atenção', CRITICAL: 'Crítica' };</span>
+const classificationColor: Record&lt;QualityClassification, 'success' | 'info' | 'warning' | 'error'&gt; = <span class="cstat-no" title="statement not covered" >{ EXCELLENT: 'success', GOOD: 'info', WARNING: 'warning', CRITICAL: 'error' };</span>
+&nbsp;
+export function <span class="fstat-no" title="function not covered" >QualityPage() {</span>
+  const <span class="cstat-no" title="statement not covered" >theme = useTheme();</span>
+  const [period, setPeriod<span class="cstat-no" title="statement not covered" >] = useState('30d');</span>
+  const [overview, setOverview<span class="cstat-no" title="statement not covered" >] = useState&lt;QualityOverview | null&gt;(null);</span>
+  const [history, setHistory<span class="cstat-no" title="statement not covered" >] = useState&lt;QualityReport[]&gt;([]);</span>
+  const [loading, setLoading<span class="cstat-no" title="statement not covered" >] = useState(true);</span>
+  const [error, setError<span class="cstat-no" title="statement not covered" >] = useState&lt;string | null&gt;(null);</span>
+&nbsp;
+  const <span class="cstat-no" title="statement not covered" >load = useCallback(<span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >    setLoading(true); <span class="cstat-no" title="statement not covered" >s</span>etError(null);</span>
+<span class="cstat-no" title="statement not covered" >    try { const [overviewData, historyData] = <span class="cstat-no" title="statement not covered" >await Promise.all([qualityService.overview(), qualityService.history(period)]); <span class="cstat-no" title="statement not covered" >s</span>etOverview(overviewData); <span class="cstat-no" title="statement not covered" >s</span>etHistory(historyData); }</span></span>
+    catch (requestError) { <span class="cstat-no" title="statement not covered" >setError(getApiErrorMessage(requestError)); }</span> finally { <span class="cstat-no" title="statement not covered" >setLoading(false); }</span>
+  }, [period]);
+<span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span> <span class="cstat-no" title="statement not covered" >void load(); }</span>, [load]);</span>
+&nbsp;
+  const chartData = <span class="cstat-no" title="statement not covered" >history.map(<span class="fstat-no" title="function not covered" >(r</span>eport) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+    ...report,
+    label: new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(new Date(report.generatedAt)),
+  }));
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  return &lt;Box px={{ xs: 2, sm: 3, xl: 4 }} py={{ xs: 2.5, md: 3.5 }} maxWidth={1580} mx="auto"&gt;</span>
+    &lt;PageHeader title="Qualidade" description="Evidências de testes e índice técnico: 60% linhas + 40% ramificações" eyebrow="Qualidade de software"
+      actions={&lt;TextField select size="small" label="Histórico" value={period} onChange={<span class="fstat-no" title="function not covered" >(e</span>vent) =&gt; <span class="cstat-no" title="statement not covered" >setPeriod(event.target.value)} s</span>x={{ minWidth: 170 }}&gt;&lt;MenuItem value="24h"&gt;24 horas&lt;/MenuItem&gt;&lt;MenuItem value="7d"&gt;7 dias&lt;/MenuItem&gt;&lt;MenuItem value="30d"&gt;30 dias&lt;/MenuItem&gt;&lt;MenuItem value="all"&gt;Todo histórico&lt;/MenuItem&gt;&lt;/TextField&gt;} /&gt;
+    {loading &amp;&amp; &lt;&gt;&lt;Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(2,1fr)', xl: 'repeat(5,1fr)' }} gap={2}&gt;{[1,2,3,4,5].map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; <span class="cstat-no" title="statement not covered" >&lt;Skeleton key={item} variant="rounded" height={135}/&gt;)</span>}&lt;/Box&gt;&lt;Skeleton variant="rounded" height={360} sx={{ mt: 2 }}/&gt;&lt;/&gt;}
+    {!loading &amp;&amp; error &amp;&amp; &lt;ViewState kind="error" title="Falha ao carregar qualidade" description={error} actionLabel="Tentar novamente" onAction={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >v</span>oid load()} /</span>&gt;}
+    {!loading &amp;&amp; !error &amp;&amp; overview?.systemsWithReports === 0 &amp;&amp; &lt;ViewState kind="empty" title="Nenhum relatório recebido" description="A cobertura de testes só aparece após um pipeline enviar um relatório real pela API de qualidade. Auditorias web são acompanhadas em Integrações." /&gt;}
+    {!loading &amp;&amp; !error &amp;&amp; overview &amp;&amp; overview.systemsWithReports &gt; 0 &amp;&amp; &lt;Stack spacing={2}&gt;
+      &lt;Panel sx={{ p: { xs: 2.5, md: 3 }, overflow: 'hidden', position: 'relative', borderColor: alpha(theme.palette.secondary.main,.3) }}&gt;
+        &lt;Box position="absolute" width={280} height={280} borderRadius="50%" right={-100} top={-150} bgcolor={alpha(theme.palette.secondary.main,.07)} /&gt;
+        &lt;Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" gap={3} position="relative"&gt;&lt;Box&gt;&lt;Stack direction="row" gap={1} alignItems="center"&gt;&lt;ScienceRoundedIcon color="secondary"/&gt;&lt;Typography variant="h2"&gt;Confiança mensurável&lt;/Typography&gt;&lt;/Stack&gt;&lt;Typography color="text.secondary" mt={.8} maxWidth={650}&gt;A qualidade é calculada a partir de cobertura de linhas e ramificações, taxa de aprovação e falhas reais de cada projeto monitorado.&lt;/Typography&gt;&lt;Stack direction="row" flexWrap="wrap" gap={.8} mt={2}&gt;&lt;/Stack&gt;&lt;/Box&gt;&lt;Stack alignItems={{ xs: 'flex-start', md: 'flex-end' }}&gt;&lt;Stack direction="row" gap={.7} alignItems="center"&gt;&lt;VerifiedRoundedIcon color={classificationColor[overview.classification]}/&gt;&lt;Typography variant="body2" fontWeight={750}&gt;{classificationLabel[overview.classification]}&lt;/Typography&gt;&lt;/Stack&gt;&lt;Typography fontSize="3rem" fontWeight={780} letterSpacing="-.06em" mt={1}&gt;{formatPercent(overview.averageCoverageScore)}&lt;/Typography&gt;&lt;Typography variant="caption" color="text.secondary"&gt;índice de cobertura ponderado&lt;/Typography&gt;&lt;/Stack&gt;&lt;/Stack&gt;
+      &lt;/Panel&gt;
+      &lt;Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(2,1fr)', xl: 'repeat(5,1fr)' }} gap={2}&gt;
+        &lt;QualityMetric label="Total de testes" value={overview.totalTests.toLocaleString('pt-BR')} color={theme.palette.primary.main}/&gt;&lt;QualityMetric label="Aprovados" value={overview.passedTests.toLocaleString('pt-BR')} color={theme.palette.success.main}/&gt;&lt;QualityMetric label="Falharam" value={overview.failedTests.toLocaleString('pt-BR')} color={theme.palette.error.main}/&gt;&lt;QualityMetric label="Ignorados" value={overview.skippedTests.toLocaleString('pt-BR')} color={theme.palette.warning.main}/&gt;&lt;QualityMetric label="Taxa de aprovação" value={formatPercent(overview.passRate)} color={theme.palette.secondary.main}/&gt;
+      &lt;/Box&gt;
+      &lt;Box display="grid" gridTemplateColumns="minmax(0,1fr)" gap={2}&gt;
+        &lt;Panel sx={{ p: 2.5 }}&gt;&lt;Typography variant="h2"&gt;Histórico de cobertura&lt;/Typography&gt;&lt;Typography variant="body2" color="text.secondary" mt={.45}&gt;Linhas, ramificações e índice por relatório&lt;/Typography&gt;&lt;Box height={310} mt={2}&gt;{chartData.length ? &lt;ResponsiveContainer width="100%" height="100%"&gt;&lt;LineChart data={chartData}&gt;&lt;CartesianGrid stroke={theme.palette.divider} vertical={false} strokeDasharray="4 5"/&gt;&lt;XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}/&gt;&lt;YAxis domain={[0,100]} axisLine={false} tickLine={false} tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}/&gt;&lt;Tooltip contentStyle={{ background: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, borderRadius: 10 }}/&gt;&lt;Line type="monotone" dataKey="lineCoverage" name="Linhas" stroke={theme.palette.primary.main} strokeWidth={2.2} dot={false}/&gt;&lt;Line type="monotone" dataKey="branchCoverage" name="Ramificações" stroke={theme.palette.secondary.main} strokeWidth={2} dot={false}/&gt;&lt;Line type="monotone" dataKey="coverageScore" name="Índice" stroke={theme.palette.success.main} strokeDasharray="5 4" dot={false}/&gt;&lt;/LineChart&gt;&lt;/ResponsiveContainer&gt; : &lt;ViewState kind="empty" title="Sem histórico no período" description="Novos relatórios aparecerão neste gráfico." /&gt;}&lt;/Box&gt;&lt;/Panel&gt;
+      &lt;/Box&gt;
+      &lt;Panel sx={{ overflow: 'hidden' }}&gt;&lt;Box p={2.5}&gt;&lt;Typography variant="h2"&gt;Qualidade por sistema&lt;/Typography&gt;&lt;Typography variant="body2" color="text.secondary" mt={.45}&gt;{overview.systemsWithReports} de {overview.monitoredSystems} sistemas com relatório&lt;/Typography&gt;&lt;/Box&gt;&lt;TableContainer&gt;&lt;Table sx={{ minWidth: 760 }}&gt;&lt;TableHead&gt;&lt;TableRow&gt;&lt;TableCell&gt;Sistema&lt;/TableCell&gt;&lt;TableCell&gt;Classificação&lt;/TableCell&gt;&lt;TableCell align="right"&gt;Testes&lt;/TableCell&gt;&lt;TableCell align="right"&gt;Aprovação&lt;/TableCell&gt;&lt;TableCell align="right"&gt;Linhas&lt;/TableCell&gt;&lt;TableCell align="right"&gt;Ramificações&lt;/TableCell&gt;&lt;TableCell align="right"&gt;Índice&lt;/TableCell&gt;&lt;/TableRow&gt;&lt;/TableHead&gt;&lt;TableBody&gt;{overview.systems.map(<span class="fstat-no" title="function not covered" >(r</span>eport) =&gt; <span class="cstat-no" title="statement not covered" >&lt;TableRow key={report.reportId} hover&gt;&lt;TableCell&gt;&lt;Typography variant="body2" fontWeight={650}&gt;{report.systemName}&lt;/Typography&gt;&lt;Typography variant="caption" color="text.secondary"&gt;{new Date(report.generatedAt).toLocaleString('pt-BR')}&lt;/Typography&gt;&lt;/TableCell&gt;&lt;TableCell&gt;&lt;Chip size="small" label={classificationLabel[report.classification]} color={classificationColor[report.classification]} variant="outlined"/&gt;&lt;/TableCell&gt;&lt;TableCell align="right"&gt;{report.totalTests}&lt;/TableCell&gt;&lt;TableCell align="right"&gt;{formatPercent(report.passRate)}&lt;/TableCell&gt;&lt;TableCell align="right"&gt;{formatPercent(report.lineCoverage)}&lt;/TableCell&gt;&lt;TableCell align="right"&gt;{formatPercent(report.branchCoverage)}&lt;/TableCell&gt;&lt;TableCell align="right"&gt;&lt;b&gt;{formatPercent(report.coverageScore)}&lt;/b&gt;&lt;/TableCell&gt;&lt;/TableRow&gt;)</span>}&lt;/TableBody&gt;&lt;/Table&gt;&lt;/TableContainer&gt;&lt;/Panel&gt;
+    &lt;/Stack&gt;}
+  &lt;/Box&gt;;
+}
+&nbsp;
+function <span class="fstat-no" title="function not covered" >QualityMetric({</span> label, value, color }: { label: string; value: string; color: string }) {
+<span class="cstat-no" title="statement not covered" >  return &lt;Panel sx={{ p: 2.2 }}&gt;&lt;Box width={28} height={4} borderRadius={4} bgcolor={color}/&gt;&lt;Typography variant="body2" color="text.secondary" mt={1.7}&gt;{label}&lt;/Typography&gt;&lt;Typography fontSize="1.8rem" fontWeight={750} mt={.7}&gt;{value}&lt;/Typography&gt;&lt;/Panel&gt;;</span>
+}
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-10-03T22:46:20.468Z
+            </div>
+        <script src="../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
+    </body>
+</html>
+    

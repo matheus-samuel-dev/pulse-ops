@@ -9,6 +9,9 @@ public record AvailabilityMetrics(
         long totalChecks,
         long successfulChecks,
         long failedChecks,
-        BigDecimal availabilityPercentage
+        BigDecimal availabilityPercentage,
+        long eligibleChecks,
+        long excludedChecks
 ) {
+    public AvailabilityMetrics(TimeRange period,long total,long successful,long failed,BigDecimal percentage){this(period,total,successful,failed,percentage,total,0);}
 }

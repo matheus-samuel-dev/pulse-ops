@@ -91,7 +91,7 @@ class LatencyMetricsServiceTest {
                 List.of(transportFailure), PERIOD);
 
         assertThat(metrics.sampleCount()).isZero();
-        assertThat(metrics.averageMs()).isEqualTo(new BigDecimal("0.00"));
+        assertThat(metrics.averageMs()).isNull();
         assertThat(metrics.minimumMs()).isNull();
         assertThat(metrics.maximumMs()).isNull();
         assertThat(metrics.p95Ms()).isNull();

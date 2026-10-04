@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-03T22:53:17.198Z",
+  "backend": {
+    "tests": 342,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "reportFiles": 44,
+    "coverage": {
+      "LINE": {
+        "covered": 2528,
+        "missed": 167,
+        "percentage": 93.8
+      },
+      "BRANCH": {
+        "covered": 1018,
+        "missed": 320,
+        "percentage": 76.08
+      }
+    },
+    "servicesCoverage": {
+      "LINE": {
+        "covered": 1311,
+        "missed": 70,
+        "percentage": 94.93
+      },
+      "BRANCH": {
+        "covered": 622,
+        "missed": 185,
+        "percentage": 77.08
+      }
+    },
+    "build": true
+  },
+  "frontend": {
+    "tests": 56,
+    "files": 14,
+    "coverage": {
+      "lines": {
+        "total": 928,
+        "covered": 370,
+        "skipped": 0,
+        "pct": 39.87
+      },
+      "statements": {
+        "total": 1301,
+        "covered": 444,
+        "skipped": 0,
+        "pct": 34.12
+      },
+      "functions": {
+        "total": 524,
+        "covered": 141,
+        "skipped": 0,
+        "pct": 26.9
+      },
+      "branches": {
+        "total": 1160,
+        "covered": 403,
+        "skipped": 0,
+        "pct": 34.74
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "build": true,
+    "lint": true,
+    "productionVulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
+  },
+  "e2e": {
+    "startTime": "2026-10-03T22:50:08.919Z",
+    "duration": 178396.704,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -67,6 +67,12 @@ public class Deployment extends AuditableEntity {
     @Column(length = 2000)
     private String description;
 
+    @Column(nullable=false,length=40) private String source="LEGACY_API";
+    @Column(name="execution_url",length=2048) private String executionUrl;
+    public String getSource(){return source;}
+    public void setSource(String v){source=v;}
+    public String getExecutionUrl(){return executionUrl;}
+    public void setExecutionUrl(String v){executionUrl=v;}
     public Deployment() {
     }
 

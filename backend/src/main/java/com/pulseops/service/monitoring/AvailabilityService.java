@@ -19,6 +19,7 @@ import java.util.UUID;
 
 @Service
 public class AvailabilityService {
+    public static final int MINIMUM_CHECKS = 5;
 
     private static final int PERCENTAGE_SCALE = 3;
 
@@ -58,8 +59,8 @@ public class AvailabilityService {
     }
 
     AvailabilityMetrics calculateForSystem(MonitoredSystem system, TimeRange period) {
-        Objects.requireNonNull(system, "system is required");
-        Objects.requireNonNull(period, "period is required");
+        Objects.requireNonNull(system, "system é obrigatório");
+        Objects.requireNonNull(period, "period é obrigatório");
         List<HealthCheck> checks = healthCheckRepository
                 .findByMonitoredSystemIdAndCheckedAtBetweenOrderByCheckedAtAsc(
                         system.getId(), period.start(), period.end());
@@ -68,7 +69,7 @@ public class AvailabilityService {
 
     public AvailabilityMetrics calculateFromChecks(List<HealthCheck> checks, TimeRange period) {
         Objects.requireNonNull(checks, "checks are required");
-        Objects.requireNonNull(period, "period is required");
+        Objects.requireNonNull(period, "period é obrigatório");
 
         List<HealthCheck> checksInPeriod = checks.stream()
                 .filter(Objects::nonNull)
@@ -76,13 +77,10 @@ public class AvailabilityService {
                 .toList();
         long successful = checksInPeriod.stream().filter(HealthCheck::isSuccess).count();
         long total = checksInPeriod.size();
-        BigDecimal availability = total == 0
-                ? BigDecimal.ZERO.setScale(PERCENTAGE_SCALE)
-                : BigDecimal.valueOf(successful)
-                        .multiply(BigDecimal.valueOf(100))
-                        .divide(BigDecimal.valueOf(total), PERCENTAGE_SCALE, RoundingMode.HALF_UP);
+        BigDecimal availability = com.pulseops.service.OperationalReadModel.availability(checksInPeriod);
 
-        return new AvailabilityMetrics(period, total, successful, total - successful, availability);
+        long eligible=checksInPeriod.stream().filter(com.pulseops.service.OperationalReadModel::eligible).count();
+        return new AvailabilityMetrics(period, total, successful, total - successful, availability,eligible,total-eligible);
     }
 
     private boolean isInside(HealthCheck check, TimeRange period) {

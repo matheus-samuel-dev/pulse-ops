@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 @Service
 public class DeploymentService {
 
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.pulseops.service.EventRecorder events;
     private static final Pattern SEMANTIC_VERSION = Pattern.compile(
             "^v?(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)"
                     + "(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?"
@@ -45,19 +46,19 @@ public class DeploymentService {
 
     @Transactional
     public Deployment create(UUID systemId, CreateDeploymentCommand command) {
-        Objects.requireNonNull(command, "command is required");
+        Objects.requireNonNull(command, "command é obrigatório");
         MonitoredSystem system = findSystem(systemId);
         String version = normalizeAndValidateVersion(command.version());
         String commitHash = normalizeAndValidateCommitHash(command.commitHash());
         if (command.environment() == null) {
-            throw new BusinessRuleException("Deployment environment is required");
+            throw new BusinessRuleException("O ambiente do deploy é obrigatório");
         }
         String description = normalizeDescription(command.description());
         OffsetDateTime deployedAt = command.deployedAt() == null
                 ? OffsetDateTime.now(clock)
                 : command.deployedAt();
         if (deployedAt.isAfter(OffsetDateTime.now(clock))) {
-            throw new BusinessRuleException("Deployment time cannot be in the future");
+            throw new BusinessRuleException("A data do deploy não pode estar no futuro");
         }
 
         Deployment deployment = new Deployment();
@@ -68,7 +69,8 @@ public class DeploymentService {
         deployment.setDeployedAt(deployedAt);
         deployment.setCommitHash(commitHash);
         deployment.setDescription(description);
-        return deploymentRepository.save(deployment);
+        deployment.setSource("MANUAL");
+        Deployment saved=deploymentRepository.save(deployment); record(saved,"DEPLOYMENT_RECORDED"); return saved;
     }
 
     @Transactional
@@ -77,29 +79,29 @@ public class DeploymentService {
     }
 
     @Transactional
-    public Deployment succeed(UUID deploymentId, long durationSeconds) {
+    public Deployment succeed(UUID deploymentId, Long durationSeconds) {
         return transition(
                 deploymentId, DeploymentStatus.RUNNING, DeploymentStatus.SUCCESS, durationSeconds);
     }
 
     @Transactional
-    public Deployment fail(UUID deploymentId, long durationSeconds) {
+    public Deployment fail(UUID deploymentId, Long durationSeconds) {
         return transition(
                 deploymentId, DeploymentStatus.RUNNING, DeploymentStatus.FAILED, durationSeconds);
     }
 
     @Transactional
-    public Deployment rollback(UUID deploymentId, long durationSeconds) {
+    public Deployment rollback(UUID deploymentId, Long durationSeconds) {
         Deployment deployment = findDeployment(deploymentId);
         if (deployment.getStatus() != DeploymentStatus.SUCCESS
                 && deployment.getStatus() != DeploymentStatus.FAILED) {
             throw new InvalidStateTransitionException(
                     "deployment", deployment.getStatus(), DeploymentStatus.ROLLED_BACK);
         }
-        validateDuration(durationSeconds);
+        if(durationSeconds!=null) validateDuration(durationSeconds);
         deployment.setStatus(DeploymentStatus.ROLLED_BACK);
         deployment.setDurationSeconds(durationSeconds);
-        return deploymentRepository.save(deployment);
+        Deployment saved=deploymentRepository.save(deployment);record(saved,"DEPLOYMENT_UPDATED");return saved;
     }
 
     @Transactional(readOnly = true)
@@ -124,23 +126,29 @@ public class DeploymentService {
             deployment.setDurationSeconds(durationSeconds);
         }
         deployment.setStatus(targetStatus);
-        return deploymentRepository.save(deployment);
+        Deployment saved=deploymentRepository.save(deployment);record(saved,targetStatus==DeploymentStatus.FAILED ? "DEPLOYMENT_FAILED" : "DEPLOYMENT_UPDATED");return saved;
     }
 
+    public Deployment succeed(UUID id,long seconds){return succeed(id,Long.valueOf(seconds));}
+    public Deployment fail(UUID id,long seconds){return fail(id,Long.valueOf(seconds));}
+    public Deployment rollback(UUID id,long seconds){return rollback(id,Long.valueOf(seconds));}
+    private void record(Deployment deployment,String type){
+        if(events!=null) events.recordResourceInEnvironment(deployment.getMonitoredSystem(),deployment.getEnvironment(),type, type.equals("DEPLOYMENT_FAILED") ? "ERROR" : "INFO", "Registro de implantação atualizado", "Versão "+deployment.getVersion()+" · origem: "+deployment.getSource(), "Registro manual via API",deployment.getId(),deployment.getStatus().name());
+    }
     private void validateDuration(long durationSeconds) {
         if (durationSeconds < 0) {
-            throw new BusinessRuleException("Deployment duration cannot be negative");
+            throw new BusinessRuleException("A duração do deploy não pode ser negativa");
         }
     }
 
     private String normalizeAndValidateVersion(String version) {
         if (version == null || version.isBlank()) {
-            throw new BusinessRuleException("Deployment version is required");
+            throw new BusinessRuleException("A versão do deploy é obrigatória");
         }
         String normalized = version.trim();
         if (!SEMANTIC_VERSION.matcher(normalized).matches()) {
             throw new BusinessRuleException(
-                    "Deployment version must follow Semantic Versioning (for example, 1.4.2)");
+                    "A versão do deploy deve seguir Semantic Versioning (por exemplo, 1.4.2)");
         }
         return normalized;
     }
@@ -151,7 +159,7 @@ public class DeploymentService {
         }
         String normalized = commitHash.trim();
         if (!COMMIT_HASH.matcher(normalized).matches()) {
-            throw new BusinessRuleException("Commit hash must contain 7 to 64 hexadecimal characters");
+            throw new BusinessRuleException("O hash do commit deve conter de 7 a 64 caracteres hexadecimais");
         }
         return normalized.toLowerCase();
     }
@@ -163,7 +171,7 @@ public class DeploymentService {
         String normalized = description.trim();
         if (normalized.length() > MAX_DESCRIPTION_LENGTH) {
             throw new BusinessRuleException(
-                    "Deployment description exceeds " + MAX_DESCRIPTION_LENGTH + " characters");
+                    "A descrição do deploy excede " + MAX_DESCRIPTION_LENGTH + " caracteres");
         }
         return normalized;
     }

@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OperationsQueryService {
 
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private OperationalReadModel readModel;
     private final IncidentRepository incidentRepository;
     private final DeploymentRepository deploymentRepository;
     private final HealthCheckRepository healthCheckRepository;
@@ -71,6 +72,16 @@ public class OperationsQueryService {
                 .toList();
     }
 
+    @Transactional(readOnly=true)
+    public List<IncidentResponse> incidents(UUID systemId,IncidentStatus status,IncidentSeverity severity,String period,com.pulseops.domain.system.Environment environment){
+        var data=readModel.read(period,environment,systemId);
+        return data.incidents().stream().filter(i->status==null||i.getStatus()==status).filter(i->severity==null||i.getSeverity()==severity).sorted(Comparator.comparing(Incident::getStartedAt).reversed()).map(IncidentResponse::from).toList();
+    }
+    @Transactional(readOnly=true)
+    public Page<HealthCheckResponse> healthChecks(UUID systemId,int page,int size,String period){
+        ensureSystemExists(systemId);var window=readModel.window(period);
+        return healthCheckRepository.findByMonitoredSystemIdAndCheckedAtBetweenOrderByCheckedAtDesc(systemId,window.start(),window.end(),PageRequest.of(page,size)).map(HealthCheckResponse::from);
+    }
     @Transactional(readOnly = true)
     public Page<HealthCheckResponse> healthChecks(UUID systemId, int page, int size) {
         ensureSystemExists(systemId);

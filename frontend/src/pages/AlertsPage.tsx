@@ -1,4 +1,3 @@
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import {
@@ -16,6 +15,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/common/PageHeader';
 import { isDemoMode } from '../config/demo';
 import { Panel } from '../components/common/Panel';
@@ -25,10 +25,11 @@ import { getApiErrorMessage } from '../services/api';
 import { notificationsService } from '../services/notificationsService';
 import type { Notification, NotificationType } from '../types/api';
 
-const typeLabel: Record<NotificationType, string> = { INFO: 'Informação', SUCCESS: 'Sucesso', WARNING: 'Atenção', ERROR: 'Erro', INCIDENT: 'Incidente', DEPLOYMENT: 'Deploy', QUALITY: 'Qualidade' };
+const typeLabel: Record<NotificationType, string> = { INFO: 'Informação', SUCCESS: 'Sucesso', WARNING: 'Atenção', ERROR: 'Erro', INCIDENT: 'Incidente', DEPLOYMENT: 'Implantação', QUALITY: 'Qualidade' };
 const typeColor: Record<NotificationType, string> = { INFO: '#56b6f7', SUCCESS: '#39c995', WARNING: '#f2b84b', ERROR: '#ef6673', INCIDENT: '#ef6673', DEPLOYMENT: '#5b8cff', QUALITY: '#9d7bff' };
 
 export function AlertsPage() {
+  const navigate = useNavigate();
   const theme = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -50,12 +51,11 @@ export function AlertsPage() {
     && (readState === 'ALL' || (readState === 'READ' ? item.read : !item.read))), [notifications, type, readState]);
 
   const markRead = async (item: Notification) => {
-    if (item.read) return;
-    try { const updated = await notificationsService.markRead(item.id); setNotifications((current) => current.map((value) => value.id === updated.id ? updated : value)); setUnreadCount((current) => Math.max(0, current - 1)); }
+    try { await (item.read ? notificationsService.markUnread(item.id) : notificationsService.markRead(item.id)); await load(); window.dispatchEvent(new Event("pulseops:alerts")); }
     catch (requestError) { setNotice(getApiErrorMessage(requestError)); }
   };
   const markAll = async () => {
-    try { await notificationsService.markAllRead(); setNotifications((current) => current.map((item) => ({ ...item, read: true }))); setUnreadCount(0); setNotice('Todos os alertas foram marcados como lidos.'); }
+    try { await notificationsService.markAllRead(); await load(); window.dispatchEvent(new Event("pulseops:alerts")); setNotice('Todos os alertas foram marcados como lidos.'); }
     catch (requestError) { setNotice(getApiErrorMessage(requestError)); }
   };
 
@@ -68,18 +68,8 @@ export function AlertsPage() {
     {!loading && !error && filtered.length === 0 && <Panel><ViewState kind="empty" title="Nenhum alerta encontrado" description="Quando algo exigir sua atenção, o PulseOps avisará por aqui." /></Panel>}
     {!loading && !error && <Stack spacing={1}>{filtered.map((item) => <Panel
       key={item.id}
-      role={!isDemoMode && !item.read ? 'button' : undefined}
-      tabIndex={!isDemoMode && !item.read ? 0 : undefined}
-      aria-label={!isDemoMode && !item.read ? `Marcar alerta ${item.title} como lido` : undefined}
-      onClick={item.read || isDemoMode ? undefined : () => void markRead(item)}
-      onKeyDown={(event) => {
-          if (!isDemoMode && !item.read && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault();
-          void markRead(item);
-        }
-      }}
-      sx={{ p: 2, cursor: !isDemoMode && !item.read ? 'pointer' : 'default', opacity: item.read ? .72 : 1, bgcolor: item.read ? 'background.paper' : alpha(typeColor[item.type], theme.palette.mode === 'dark' ? .035 : .025) }}
-    ><Stack direction="row" gap={1.5} alignItems="flex-start"><Box width={38} height={38} flex="0 0 38px" display="grid" sx={{ placeItems: 'center', borderRadius: 2.3, bgcolor: alpha(typeColor[item.type],.12), color: typeColor[item.type] }}><NotificationsActiveRoundedIcon fontSize="small"/></Box><Box flex={1}><Stack direction="row" gap={1} alignItems="center" flexWrap="wrap"><Typography variant="body2" fontWeight={item.read ? 600 : 750}>{item.title}</Typography><Chip size="small" label={typeLabel[item.type]} variant="outlined" sx={{ color: typeColor[item.type], borderColor: alpha(typeColor[item.type],.35) }}/>{!item.read && <Box width={7} height={7} bgcolor="primary.main" borderRadius="50%"/>}</Stack><Typography variant="body2" color="text.secondary" mt={.55} lineHeight={1.6}>{item.message}</Typography><Typography variant="caption" color="text.secondary" display="block" mt={.8}>{formatRelativeTime(item.createdAt)}</Typography></Box>{item.read && <CheckRoundedIcon color="disabled" fontSize="small"/>}</Stack></Panel>)}</Stack>}
+      sx={{ p: 2, opacity: item.read ? .72 : 1, bgcolor: item.read ? 'background.paper' : alpha(typeColor[item.type], theme.palette.mode === 'dark' ? .035 : .025) }}
+    ><Stack direction="row" gap={1.5} alignItems="flex-start"><Box width={38} height={38} flex="0 0 38px" display="grid" sx={{ placeItems: 'center', borderRadius: 2.3, bgcolor: alpha(typeColor[item.type],.12), color: typeColor[item.type] }}><NotificationsActiveRoundedIcon fontSize="small"/></Box><Box flex={1}><Stack direction="row" gap={1} alignItems="center" flexWrap="wrap"><Typography variant="body2" fontWeight={item.read ? 600 : 750}>{item.title}</Typography><Chip size="small" label={typeLabel[item.type]} variant="outlined" sx={{ color: typeColor[item.type], borderColor: alpha(typeColor[item.type],.35) }}/>{!item.read && <Box width={7} height={7} bgcolor="primary.main" borderRadius="50%"/>}</Stack><Typography variant="body2" color="text.secondary" mt={.55} lineHeight={1.6}>{item.message}</Typography><Typography variant="caption" color="text.secondary" display="block" mt={.8}>{formatRelativeTime(item.createdAt)}</Typography></Box><Stack gap={1}>{!isDemoMode && <Button size="small" onClick={() => void markRead(item)}>{item.read ? "Marcar como não lido" : "Marcar como lido"}</Button>}{(item.systemId || item.resourceId) && <Button size="small" onClick={() => navigate(item.systemId ? item.type === "INCIDENT" ? `/incidentes?incidente=${item.resourceId}` : item.type === "DEPLOYMENT" ? `/deploys?implantacao=${item.resourceId}` : `/sistemas/${item.systemId}` : "/integracoes")}>Abrir origem</Button>}</Stack></Stack></Panel>)}</Stack>}
     <Snackbar open={Boolean(notice)} autoHideDuration={4000} onClose={() => setNotice(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}><Alert variant="filled" severity={notice?.startsWith('Todos') ? 'success' : 'error'} onClose={() => setNotice(null)}>{notice}</Alert></Snackbar>
   </Box>;
 }

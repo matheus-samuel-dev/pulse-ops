@@ -16,12 +16,14 @@ public record DeploymentResponse(
         OffsetDateTime deployedAt,
         Long durationSeconds,
         String commitHash,
-        String description
+        String description,
+        String source,
+        String executionUrl
 ) {
     public static DeploymentResponse from(Deployment deployment) {
         return new DeploymentResponse(
                 deployment.getId(), deployment.getMonitoredSystem().getId(), deployment.getMonitoredSystem().getName(),
                 deployment.getVersion(), deployment.getEnvironment(), deployment.getStatus(), deployment.getDeployedAt(),
-                deployment.getDurationSeconds(), deployment.getCommitHash(), deployment.getDescription());
+                deployment.getDurationSeconds(), deployment.getCommitHash(), deployment.getDescription(),deployment.getSource(),deployment.getExecutionUrl());
     }
 }

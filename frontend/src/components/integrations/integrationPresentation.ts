@@ -8,10 +8,10 @@ import HubRoundedIcon from '@mui/icons-material/HubRounded';
 import type { IntegrationStatus } from '../../types/integrations';
 
 export const integrationLabels: Record<IntegrationStatus, string> = {
-  ONLINE: 'Online', ATTENTION: 'Atenção', OFFLINE: 'Offline', UNKNOWN: 'Desconhecido',
+  ONLINE: 'Conectada', ATTENTION: 'Atenção', OFFLINE: 'Erro de conexão', UNKNOWN: 'Aguardando teste', NOT_CONFIGURED: 'Não configurada',
 };
 export const integrationColors = {
-  ONLINE: 'success', ATTENTION: 'warning', OFFLINE: 'error', UNKNOWN: 'default',
+  ONLINE: 'success', ATTENTION: 'warning', OFFLINE: 'error', UNKNOWN: 'default', NOT_CONFIGURED: 'default',
 } as const;
 
 export function integrationIdentity(id: string) {

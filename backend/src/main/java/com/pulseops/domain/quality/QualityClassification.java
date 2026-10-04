@@ -4,5 +4,6 @@ public enum QualityClassification {
     EXCELLENT,
     GOOD,
     WARNING,
-    CRITICAL
+    CRITICAL,
+    NO_DATA
 }

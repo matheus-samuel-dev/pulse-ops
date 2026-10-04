@@ -26,6 +26,10 @@ public class DashboardController {
         this.dashboardService = dashboardService;
     }
 
+    @GetMapping
+    public com.pulseops.dto.dashboard.DashboardDataResponse snapshot(@RequestParam(defaultValue="24h") String period,@RequestParam(required=false) Environment environment) {
+        return dashboardService.snapshot(period,environment);
+    }
     @GetMapping("/summary")
     public DashboardSummaryResponse summary(
             @RequestParam(defaultValue = "24h") String period,

@@ -33,8 +33,8 @@ public class MonitoringService {
     public HealthCheck checkSystem(UUID systemId) {
         MonitoredSystem probeTarget = systemRepository.findById(systemId)
                 .orElseThrow(() -> new ResourceNotFoundException("Monitored system", systemId));
-        if (!probeTarget.isActive()) {
-            throw new BusinessRuleException("Inactive systems cannot be monitored");
+        if (!probeTarget.isActive() || probeTarget.isMaintenance()) {
+            throw new BusinessRuleException("Sistemas inativos não podem ser monitorados");
         }
 
         HealthProbeResult probe = safelyProbe(probeTarget);

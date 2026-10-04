@@ -1,5 +1,5 @@
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
-import { alpha, Box, IconButton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography, useTheme } from '@mui/material';
+import { alpha, Box, IconButton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { Line, LineChart, ResponsiveContainer, YAxis } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import type { SystemHealth, SystemStatus } from '../../types/api';
@@ -12,10 +12,13 @@ const statusColor: Record<SystemStatus, string> = {
   DEGRADED: '#f2b84b',
   DOWN: '#ef6673',
   UNKNOWN: '#8fa0b9',
+  MAINTENANCE: '#8c98ab',
+  CONFIGURATION_REQUIRED: '#ef6673',
 };
 
 export function SystemHealthTable({ systems }: { systems: SystemHealth[] }) {
   const theme = useTheme();
+  const tableVisible = useMediaQuery(theme.breakpoints.up('md'));
   const navigate = useNavigate();
 
   return (
@@ -43,19 +46,20 @@ export function SystemHealthTable({ systems }: { systems: SystemHealth[] }) {
       <Stack spacing={1.1} p={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
         {systems.map((system) => (
           <Box key={system.id} component="button" type="button" onClick={() => navigate(`/sistemas/${system.id}`)} sx={{ appearance: 'none', color: 'text.primary', textAlign: 'left', font: 'inherit', width: '100%', p: 1.6, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'transparent', cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}>
-            <Stack direction="row" justifyContent="space-between" gap={1} alignItems="flex-start"><Box><Typography variant="body2" fontWeight={700}>{system.name}</Typography><Typography variant="caption" color="text.secondary">{environmentLabels[system.environment]}</Typography></Box><SystemStatusChip status={system.status} /></Stack>
-            <Box display="grid" gridTemplateColumns="repeat(2,minmax(0,1fr))" gap={1.2} mt={1.5}><MobileMetric label="Uptime" value={formatPercent(system.uptime)} /><MobileMetric label="Latência" value={formatLatency(system.latencyMs)} /><MobileMetric label="Último check" value={formatRelativeTime(system.lastCheckedAt)} /><MobileMetric label="Amostras" value={`${system.sparkline.length} recentes`} /></Box>
+            <Stack direction="row" justifyContent="space-between" gap={1} alignItems="flex-start"><Box><Typography variant="body2" fontWeight={700}>{system.name}</Typography><Typography variant="caption" color="text.secondary">{environmentLabels[system.environment]}</Typography></Box><SystemStatusChip status={system.status} active={system.active} /></Stack>
+            <Typography variant="caption" display="block" mt={1} sx={{ overflowWrap: "anywhere" }}>{system.statusReason}</Typography>
+            <Box display="grid" gridTemplateColumns="repeat(2,minmax(0,1fr))" gap={1.2} mt={1.5}><MobileMetric label="Disponibilidade" value={formatPercent(system.uptime)} /><MobileMetric label="Latência" value={formatLatency(system.latencyMs)} /><MobileMetric label="Última verificação" value={formatRelativeTime(system.lastCheckedAt)} /><MobileMetric label="Respostas HTTP" value={`${system.sparkline.length} recentes`} /></Box>
           </Box>
         ))}
       </Stack>
-      <TableContainer sx={{ display: { xs: 'none', md: 'block' } }}>
+      {tableVisible && <TableContainer>
         <Table sx={{ minWidth: 760 }} aria-label="Saúde dos sistemas monitorados">
           <TableHead>
             <TableRow>
-              {['Sistema', 'Status', 'Uptime', 'Última verificação', 'Latência', 'Tendência', ''].map((label) => (
+              {['Sistema', 'Estado', 'Disponibilidade', 'Última verificação', 'Latência', 'Tendência', ''].map((label) => (
                 <TableCell
                   key={label || 'actions'}
-                  align={['Uptime', 'Latência', 'Tendência'].includes(label) ? 'right' : 'left'}
+                  align={['Disponibilidade', 'Latência', 'Tendência'].includes(label) ? 'right' : 'left'}
                   sx={{
                     color: 'text.secondary',
                     fontSize: '0.67rem',
@@ -109,7 +113,7 @@ export function SystemHealthTable({ systems }: { systems: SystemHealth[] }) {
                       </Box>
                     </Stack>
                   </TableCell>
-                  <TableCell sx={{ borderColor: 'divider' }}><SystemStatusChip status={system.status} /></TableCell>
+                  <TableCell sx={{ borderColor: 'divider' }}><SystemStatusChip status={system.status} active={system.active} /><Typography variant="caption" display="block" sx={{ maxWidth: 230 }}>{system.statusReason}</Typography>{system.statusChangedAt && system.status !== "OPERATIONAL" && <Typography variant="caption" color="text.secondary">Desde {new Date(system.statusChangedAt).toLocaleString("pt-BR")}</Typography>}</TableCell>
                   <TableCell align="right" sx={{ borderColor: 'divider', fontWeight: 650 }}>
                     {formatPercent(system.uptime)}
                   </TableCell>
@@ -147,7 +151,7 @@ export function SystemHealthTable({ systems }: { systems: SystemHealth[] }) {
             })}
           </TableBody>
         </Table>
-      </TableContainer>
+      </TableContainer>}
     </Panel>
   );
 }

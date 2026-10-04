@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { alpha, createTheme, CssBaseline, ThemeProvider, type PaletteMode } from '@mui/material';
+import { ptBR } from '@mui/material/locale';
 
 interface ColorModeContextValue {
   mode: PaletteMode;
@@ -24,12 +25,12 @@ function buildTheme(mode: PaletteMode) {
   return createTheme({
     palette: {
       mode,
-      primary: { main: '#5b8cff', light: '#85aaff', dark: '#3f6ed5' },
-      secondary: { main: '#9d7bff' },
-      success: { main: '#39c995' },
-      warning: { main: '#f2b84b' },
-      error: { main: '#ef6673' },
-      info: { main: '#56b6f7' },
+      primary: { main: dark ? '#5b8cff' : '#3f6ed5', light: '#85aaff', dark: '#3f6ed5', contrastText: dark ? '#07101f' : '#ffffff' },
+      secondary: { main: dark ? '#9d7bff' : '#7950cc', contrastText: dark ? '#07101f' : '#ffffff' },
+      success: { main: dark ? '#39c995' : '#087f5b', contrastText: dark ? '#07101f' : '#ffffff' },
+      warning: { main: dark ? '#f2b84b' : '#925b00', contrastText: dark ? '#07101f' : '#ffffff' },
+      error: { main: dark ? '#ef6673' : '#b4233a', contrastText: dark ? '#07101f' : '#ffffff' },
+      info: { main: dark ? '#56b6f7' : '#14628c', contrastText: dark ? '#07101f' : '#ffffff' },
       background: { default: background, paper },
       text: { primary: textPrimary, secondary: textSecondary },
       divider: dark ? 'rgba(148, 163, 184, 0.13)' : 'rgba(26, 42, 68, 0.11)',
@@ -101,7 +102,7 @@ function buildTheme(mode: PaletteMode) {
         },
       },
     },
-  });
+  }, ptBR);
 }
 
 export function PulseOpsThemeProvider({ children }: { children: ReactNode }) {

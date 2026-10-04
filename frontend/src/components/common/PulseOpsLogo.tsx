@@ -30,7 +30,7 @@ export function PulseOpsLogo({ compact = false, sx }: PulseOpsLogoProps) {
             PulseOps
           </Typography>
           <Typography color="text.secondary" fontSize="0.62rem" letterSpacing="0.07em" textTransform="uppercase">
-            Observability Platform
+            Central de operações
           </Typography>
         </Box>
       )}

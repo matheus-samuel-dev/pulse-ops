@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthService {
 
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private EventRecorder events;
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final UserService userService;
@@ -36,22 +37,23 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         String email = request.email().trim().toLowerCase(Locale.ROOT);
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, request.password()));
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", email));
+        if(events!=null) events.recordAccount(user.getId(),"ACCOUNT_LOGIN","INFO","Login realizado",null,"Autenticação PulseOps",user.getId(),"SUCCESS");
         return response(user);
     }
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        User user = userService.create(request.name(), request.email(), request.password(), UserRole.VIEWER);
+        User user = userService.create(request.name(), request.email(), request.password(), UserRole.DEVELOPER);
         return response(user);
     }
 
-    private AuthResponse response(User user) {
+    public AuthResponse response(User user) {
         String token = jwtService.generateToken(PulseOpsPrincipal.from(user));
         return new AuthResponse(token, "Bearer", jwtService.extractExpiration(token), UserResponse.from(user));
     }

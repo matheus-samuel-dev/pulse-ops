@@ -17,6 +17,8 @@ import java.util.concurrent.Executor;
 @Service
 public class MonitoringBatchService {
 
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.pulseops.repository.HealthCheckRepository checks;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private java.time.Clock clock;
     private final MonitoredSystemRepository systemRepository;
     private final MonitoringService monitoringService;
     private final Executor monitoringTaskExecutor;
@@ -32,7 +34,11 @@ public class MonitoringBatchService {
     }
 
     public MonitoringBatchResult checkAllActiveSystems() {
-        List<MonitoredSystem> systems = systemRepository.findAllByActiveTrueOrderByNameAsc();
+        List<MonitoredSystem> systems = systemRepository.findAllByActiveTrueOrderByNameAsc().stream()
+                .filter(system -> !system.isMaintenance())
+                .filter(system -> checks==null || checks.findFirstByMonitoredSystemIdOrderByCheckedAtDesc(system.getId())
+                    .map(last -> !last.getCheckedAt().plusSeconds(system.getMonitoringIntervalSeconds()).isAfter(java.time.OffsetDateTime.now(clock)))
+                    .orElse(true)).toList();
         List<CompletableFuture<MonitoringFailure>> checks = systems.stream()
                 .map(this::submitCheck)
                 .toList();

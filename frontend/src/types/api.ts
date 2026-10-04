@@ -1,10 +1,10 @@
 export type UserRole = 'ADMIN' | 'DEVELOPER' | 'VIEWER';
 export type Environment = 'PRODUCTION' | 'STAGING' | 'DEVELOPMENT';
-export type SystemStatus = 'OPERATIONAL' | 'DEGRADED' | 'DOWN' | 'UNKNOWN';
+export type SystemStatus = 'OPERATIONAL' | 'DEGRADED' | 'DOWN' | 'UNKNOWN' | 'MAINTENANCE' | 'CONFIGURATION_REQUIRED';
 export type IncidentSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type IncidentStatus = 'OPEN' | 'INVESTIGATING' | 'RESOLVED';
 export type DeploymentStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'ROLLED_BACK';
-export type QualityClassification = 'EXCELLENT' | 'GOOD' | 'WARNING' | 'CRITICAL';
+export type QualityClassification = 'EXCELLENT' | 'GOOD' | 'WARNING' | 'CRITICAL' | 'NO_DATA';
 export type NotificationType = 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR' | 'INCIDENT' | 'DEPLOYMENT' | 'QUALITY';
 
 export interface User {
@@ -30,23 +30,25 @@ export interface LoginCredentials {
 
 export interface DashboardSummary {
   monitoredSystems: number;
-  averageAvailability: number;
-  availabilityChange: number;
+  averageAvailability: number | null;
+  availabilityChange: number | null;
   openIncidents: number;
   incidentChange: number;
-  averageCoverage: number;
-  coverageChange: number;
+  averageCoverage: number | null;
+  coverageChange: number | null;
   deployments: number;
   operationalSystems: number;
   degradedSystems: number;
   downSystems: number;
-  overallHealth: 'HEALTHY' | 'DEGRADED' | 'CRITICAL';
+  configurationRequiredSystems: number;
+  problemSystems: number;
+  overallHealth: 'HEALTHY' | 'DEGRADED' | 'CRITICAL' | 'UNKNOWN';
   period: string;
 }
 
 export interface LatencyPoint {
   timestamp: string;
-  averageMs: number;
+  averageMs: number | null;
   p95Ms: number | null;
   samples: number;
 }
@@ -65,10 +67,14 @@ export interface SystemHealth {
   name: string;
   environment: Environment;
   status: SystemStatus;
-  uptime: number;
+  uptime: number | null;
   latencyMs: number | null;
   lastCheckedAt: string | null;
   sparkline: number[];
+  active: boolean;
+  totalChecks: number;
+  statusReason?: string;
+  statusChangedAt?: string;
 }
 
 export interface DashboardData {
@@ -100,11 +106,17 @@ export interface MonitoredSystem {
   timeoutMs: number;
   latencyThresholdMs: number;
   targetAvailability: number;
+  statusReason?: string;
+  statusChangedAt?: string;
+  lastFailureAt?: string;
+  monitoringIntervalSeconds: number;
+  maintenance: boolean;
+  lastCheck?: HealthCheck | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export type MonitoredSystemInput = Omit<MonitoredSystem, 'id' | 'status' | 'createdAt' | 'updatedAt'>;
+export type MonitoredSystemInput = Omit<MonitoredSystem, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'statusReason' | 'statusChangedAt' | 'lastFailureAt' | 'lastCheck'>;
 
 export interface TimeRange { start: string; end: string }
 
@@ -113,13 +125,15 @@ export interface AvailabilityMetrics {
   totalChecks: number;
   successfulChecks: number;
   failedChecks: number;
-  availabilityPercentage: number;
+  availabilityPercentage: number | null;
+  eligibleChecks: number;
+  excludedChecks: number;
 }
 
 export interface LatencyMetrics {
   period: TimeRange;
   sampleCount: number;
-  averageMs: number;
+  averageMs: number | null;
   minimumMs?: number;
   maximumMs?: number;
   p95Ms?: number;
@@ -127,10 +141,10 @@ export interface LatencyMetrics {
 
 export interface SlaMetrics {
   period: TimeRange;
-  currentAvailability: number;
+  currentAvailability: number | null;
   targetAvailability: number;
   targetMet: boolean;
-  differencePercentagePoints: number;
+  differencePercentagePoints: number | null;
   status: 'MET' | 'AT_RISK' | 'BREACHED' | 'NO_DATA';
   evaluatedChecks: number;
 }
@@ -150,6 +164,7 @@ export interface HealthCheck {
   responseTimeMs: number;
   success: boolean;
   errorMessage?: string;
+  failureType: string;
 }
 
 export interface PageResponse<T> {
@@ -173,6 +188,7 @@ export interface Incident {
   severity: IncidentSeverity;
   status: IncidentStatus;
   startedAt: string;
+  investigatingAt?: string;
   resolvedAt?: string;
   automatic: boolean;
   createdAt: string;
@@ -195,6 +211,8 @@ export interface Deployment {
   status: DeploymentStatus;
   deployedAt: string;
   durationSeconds?: number;
+  source: string;
+  executionUrl?: string;
   commitHash?: string;
   description?: string;
 }
@@ -226,6 +244,7 @@ export interface QualityReport extends QualitySummary {
   systemName: string;
   environment: Environment;
   generatedAt: string;
+  source: string;
 }
 
 export interface QualityOverview {
@@ -237,9 +256,9 @@ export interface QualityOverview {
   failedTests: number;
   skippedTests: number;
   passRate: number;
-  averageLineCoverage: number;
-  averageBranchCoverage: number;
-  averageCoverageScore: number;
+  averageLineCoverage: number | null;
+  averageBranchCoverage: number | null;
+  averageCoverageScore: number | null;
   classification: QualityClassification;
   systems: QualityReport[];
 }
@@ -251,6 +270,9 @@ export interface Notification {
   type: NotificationType;
   read: boolean;
   createdAt: string;
+  eventId?: string;
+  systemId?: string;
+  resourceId?: string;
 }
 
 export interface NotificationPage {
@@ -274,24 +296,24 @@ export interface OperationalReportKpis {
   totalHealthChecks: number;
   successfulHealthChecks: number;
   failedHealthChecks: number;
-  availability: number;
+  availability: number | null;
   activeIncidents: number;
   incidentsOpened: number;
   deployments: number;
   successfulDeployments: number;
-  deploymentSuccessRate: number;
+  deploymentSuccessRate: number | null;
   totalTests: number;
   passedTests: number;
   failedTests: number;
   skippedTests: number;
-  testPassRate: number;
-  averageLineCoverage: number;
-  averageBranchCoverage: number;
+  testPassRate: number | null;
+  averageLineCoverage: number | null;
+  averageBranchCoverage: number | null;
 }
 
 export interface OperationalEvent {
   id: string;
-  type: 'HEALTH_CHECK' | 'INCIDENT' | 'DEPLOYMENT' | 'QUALITY';
+  type: 'HEALTH_CHECK' | 'INCIDENT' | 'DEPLOYMENT' | 'QUALITY' | 'SYSTEM' | 'ACCOUNT' | 'INTEGRATION';
   occurredAt: string;
   systemId: string;
   systemName: string;
@@ -310,4 +332,7 @@ export interface OperationalReport {
   windowEnd: string;
   kpis: OperationalReportKpis;
   feed: OperationalEvent[];
+  totalEvents: number;
+  eventPages: number;
+  eventPage: number;
 }

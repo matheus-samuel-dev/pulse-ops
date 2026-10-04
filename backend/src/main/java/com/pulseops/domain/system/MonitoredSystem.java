@@ -25,9 +25,26 @@ import java.math.BigDecimal;
                 @Index(name = "idx_monitored_systems_status", columnList = "status"),
                 @Index(name = "idx_monitored_systems_active_environment", columnList = "active,environment")
         },
-        uniqueConstraints = @UniqueConstraint(name = "uk_monitored_systems_name", columnNames = "name")
+        uniqueConstraints = @UniqueConstraint(name = "uk_systems_owner_name", columnNames = {"owner_id", "name"})
 )
 public class MonitoredSystem extends AuditableEntity {
+    @Column(name = "status_reason", length = 512) private String statusReason;
+    @Column(name = "status_changed_at") private java.time.OffsetDateTime statusChangedAt;
+    @Column(name = "last_failure_at") private java.time.OffsetDateTime lastFailureAt;
+    public String getStatusReason() { return statusReason; }
+    public void setStatusReason(String value) { statusReason = value; }
+    public java.time.OffsetDateTime getStatusChangedAt() { return statusChangedAt; }
+    public void setStatusChangedAt(java.time.OffsetDateTime value) { statusChangedAt = value; }
+    public java.time.OffsetDateTime getLastFailureAt() { return lastFailureAt; }
+    public void setLastFailureAt(java.time.OffsetDateTime value) { lastFailureAt = value; }
+    @Column(nullable = false)
+    private boolean demonstration;
+    public boolean isDemonstration() { return demonstration; }
+
+    @Column(name = "owner_id")
+    private java.util.UUID ownerId;
+    public java.util.UUID getOwnerId() { return ownerId; }
+    public void setOwnerId(java.util.UUID value) { ownerId = value; }
 
     @NotBlank
     @Size(max = 120)
@@ -46,7 +63,7 @@ public class MonitoredSystem extends AuditableEntity {
     @NotBlank
     @Size(max = 512)
     @Column(name = "health_endpoint", nullable = false, length = 512)
-    private String healthEndpoint = "/actuator/health";
+    private String healthEndpoint = "/";
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -55,7 +72,7 @@ public class MonitoredSystem extends AuditableEntity {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 32)
     private SystemStatus status = SystemStatus.UNKNOWN;
 
     @Column(nullable = false)
@@ -79,6 +96,13 @@ public class MonitoredSystem extends AuditableEntity {
     @DecimalMax("100.000")
     @Column(name = "target_availability", nullable = false, precision = 6, scale = 3)
     private BigDecimal targetAvailability = new BigDecimal("99.900");
+
+    @Column(name="monitoring_interval_seconds", nullable=false) private int monitoringIntervalSeconds = 60;
+    @Column(nullable=false) private boolean maintenance;
+    public int getMonitoringIntervalSeconds(){return monitoringIntervalSeconds;}
+    public void setMonitoringIntervalSeconds(int value){monitoringIntervalSeconds=value;}
+    public boolean isMaintenance(){return maintenance;}
+    public void setMaintenance(boolean value){maintenance=value;}
 
     public MonitoredSystem() {
     }
@@ -171,3 +195,4 @@ public class MonitoredSystem extends AuditableEntity {
         this.targetAvailability = targetAvailability;
     }
 }
+

@@ -14,6 +14,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface IncidentRepository extends JpaRepository<Incident, UUID> {
+    @Override
+    @Query("select item from Incident item join fetch item.monitoredSystem system where " + com.pulseops.security.AccountScope.SYSTEM)
+    List<Incident> findAll();
+
+    @Override
+    @Query("select item from Incident item join fetch item.monitoredSystem system where item.id = :id and " + com.pulseops.security.AccountScope.SYSTEM)
+    java.util.Optional<Incident> findById(@Param("id") UUID id);
+
 
     Optional<Incident> findFirstByMonitoredSystemIdAndStatusInOrderByStartedAtDesc(
             UUID monitoredSystemId,
@@ -36,6 +44,7 @@ public interface IncidentRepository extends JpaRepository<Incident, UUID> {
             from Incident incident
             join incident.monitoredSystem system
             where system.active = true
+              and (:#{T(com.pulseops.security.AccountScope).unrestricted()} = true or system.ownerId = :#{T(com.pulseops.security.AccountScope).userId()})
               and incident.status in :statuses
               and (:environment is null or system.environment = :environment)
             """)
@@ -49,6 +58,7 @@ public interface IncidentRepository extends JpaRepository<Incident, UUID> {
             from Incident incident
             join incident.monitoredSystem system
             where system.active = true
+              and (:#{T(com.pulseops.security.AccountScope).unrestricted()} = true or system.ownerId = :#{T(com.pulseops.security.AccountScope).userId()})
               and incident.startedAt between :start and :end
               and (:environment is null or system.environment = :environment)
             """)
@@ -63,6 +73,7 @@ public interface IncidentRepository extends JpaRepository<Incident, UUID> {
             from Incident incident
             join fetch incident.monitoredSystem system
             where system.active = true
+              and (:#{T(com.pulseops.security.AccountScope).unrestricted()} = true or system.ownerId = :#{T(com.pulseops.security.AccountScope).userId()})
               and incident.startedAt between :start and :end
               and (:environment is null or system.environment = :environment)
             order by incident.startedAt desc

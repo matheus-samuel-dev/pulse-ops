@@ -15,6 +15,14 @@ public record SystemHealthResponse(
         BigDecimal uptime,
         Long latencyMs,
         OffsetDateTime lastCheckedAt,
-        List<Long> sparkline
+        List<Long> sparkline,
+        String statusReason,
+        OffsetDateTime statusChangedAt,
+        boolean active,
+        long totalChecks
 ) {
+    public SystemHealthResponse(UUID id, String name, Environment environment, SystemStatus status, BigDecimal uptime,
+            Long latencyMs, OffsetDateTime lastCheckedAt, List<Long> sparkline) {
+        this(id,name,environment,status,uptime,latencyMs,lastCheckedAt,sparkline,null,null,true,0);
+    }
 }

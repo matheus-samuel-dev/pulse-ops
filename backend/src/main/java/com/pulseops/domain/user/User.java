@@ -21,6 +21,13 @@ import jakarta.validation.constraints.Size;
         uniqueConstraints = @UniqueConstraint(name = "uk_app_users_email", columnNames = "email")
 )
 public class User extends AuditableEntity {
+    @Column(nullable = false)
+    private boolean demonstration;
+    public boolean isDemonstration() { return demonstration; }
+    @Column(name = "session_version", nullable = false)
+    private long sessionVersion;
+    public long getSessionVersion() { return sessionVersion; }
+    public void setSessionVersion(long value) { sessionVersion = value; }
 
     @NotBlank
     @Size(max = 120)

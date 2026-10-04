@@ -13,12 +13,17 @@ public record PulseOpsPrincipal(
         String name,
         String email,
         String password,
-        String role
+        String role,
+        long sessionVersion
 ) implements UserDetails {
+
+    public PulseOpsPrincipal(UUID id, String name, String email, String password, String role) {
+        this(id, name, email, password, role, 0);
+    }
 
     public static PulseOpsPrincipal from(User user) {
         return new PulseOpsPrincipal(
-                user.getId(), user.getName(), user.getEmail(), user.getPassword(), user.getRole().name());
+                user.getId(), user.getName(), user.getEmail(), user.getPassword(), user.getRole().name(), user.getSessionVersion());
     }
 
     @Override

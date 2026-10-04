@@ -33,7 +33,7 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Registra um usuário com perfil VIEWER")
+    @Operation(summary = "Cria uma conta para monitorar seus próprios sistemas")
     public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
     }

@@ -136,7 +136,7 @@ class MonitoredSystemServiceTest {
         assertThat(response.name()).isEqualTo("Catalog API");
         assertThat(response.description()).isEqualTo("New description");
         assertThat(response.healthEndpoint()).isEqualTo("/ready");
-        assertThat(response.status()).isEqualTo(SystemStatus.DEGRADED);
+        assertThat(response.status()).isEqualTo(SystemStatus.UNKNOWN);
         verify(repository).save(system);
     }
 

@@ -11,7 +11,7 @@ const session: AuthResponse = {
 
 describe('session storage', () => {
   beforeEach(() => {
-    window.localStorage.clear();
+    window.localStorage.clear(); window.sessionStorage.clear();
     vi.setSystemTime(new Date('2026-08-31T15:00:00Z'));
   });
 

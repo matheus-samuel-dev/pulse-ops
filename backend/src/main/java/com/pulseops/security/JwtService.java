@@ -29,6 +29,7 @@ public class JwtService {
                 .subject(principal.getUsername())
                 .issuer(properties.issuer())
                 .claim("role", principal.role())
+                .claim("version", principal.sessionVersion())
                 .claim("name", principal.name())
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(expiresAt))
@@ -47,7 +48,9 @@ public class JwtService {
     public boolean isValid(String token, UserDetails userDetails) {
         try {
             Claims claims = claims(token);
-            return claims.getSubject().equals(userDetails.getUsername())
+            return (!(userDetails instanceof PulseOpsPrincipal principal)
+                    || java.util.Objects.equals(claims.get("version", Long.class), principal.sessionVersion()))
+                    && claims.getSubject().equals(userDetails.getUsername())
                     && claims.getExpiration().toInstant().isAfter(clock.instant());
         } catch (RuntimeException exception) {
             return false;
@@ -57,6 +60,7 @@ public class JwtService {
     private Claims claims(String token) {
         return Jwts.parser()
                 .verifyWith(signingKey())
+                .requireIssuer(properties.issuer())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

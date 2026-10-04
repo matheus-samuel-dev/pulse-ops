@@ -1,4 +1,4 @@
-export type IntegrationStatus = 'ONLINE' | 'ATTENTION' | 'OFFLINE' | 'UNKNOWN';
+export type IntegrationStatus = 'ONLINE' | 'ATTENTION' | 'OFFLINE' | 'UNKNOWN' | 'NOT_CONFIGURED';
 
 export interface Integration {
   id: string;
@@ -27,7 +27,7 @@ export interface Integration {
 
 export interface IntegrationOverview {
   integrations: Integration[];
-  summary: { connected: number; operational: number; withIncidents: number; eventsToday: number };
+  summary: { connected: number; operational: number; withErrors: number; eventsToday: number };
   readOnly: boolean;
   generatedAt: string;
   reportingTimezone: string;
@@ -36,7 +36,7 @@ export interface IntegrationOverview {
 export interface IntegrationCheckResult {
   integrationId: string;
   status: IntegrationStatus;
-  responseTimeMs: number;
+  responseTimeMs: number | null;
   checkedAt: string;
   message: string;
   cached: boolean;

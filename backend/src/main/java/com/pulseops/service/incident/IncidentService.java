@@ -21,6 +21,9 @@ import java.util.UUID;
 
 @Service
 public class IncidentService {
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.pulseops.service.EventRecorder events;
+
 
     private static final int MAX_TITLE_LENGTH = 180;
     private static final int MAX_DESCRIPTION_LENGTH = 4_000;
@@ -41,7 +44,7 @@ public class IncidentService {
 
     @Transactional
     public Incident create(UUID systemId, CreateIncidentCommand command) {
-        Objects.requireNonNull(command, "command is required");
+        Objects.requireNonNull(command, "command é obrigatório");
         MonitoredSystem system = findSystem(systemId);
         return createIncident(
                 system,
@@ -61,7 +64,7 @@ public class IncidentService {
             IncidentSeverity severity,
             OffsetDateTime startedAt
     ) {
-        Objects.requireNonNull(system, "system is required");
+        Objects.requireNonNull(system, "system é obrigatório");
         return createIncident(system, title, description, severity, startedAt, true);
     }
 
@@ -73,6 +76,8 @@ public class IncidentService {
                     "incident", incident.getStatus(), IncidentStatus.INVESTIGATING);
         }
         incident.setStatus(IncidentStatus.INVESTIGATING);
+        incident.setInvestigatingAt(OffsetDateTime.now(clock));
+        record(incident, "INCIDENT_INVESTIGATING", "Investigação iniciada", "WARNING");
         return incidentRepository.save(incident);
     }
 
@@ -83,17 +88,18 @@ public class IncidentService {
 
     @Transactional
     public Incident resolve(Incident incident, OffsetDateTime resolvedAt) {
-        Objects.requireNonNull(incident, "incident is required");
-        Objects.requireNonNull(resolvedAt, "resolvedAt is required");
+        Objects.requireNonNull(incident, "incident é obrigatório");
+        Objects.requireNonNull(resolvedAt, "resolvedAt é obrigatório");
         if (incident.getStatus() == IncidentStatus.RESOLVED) {
             throw new InvalidStateTransitionException(
                     "incident", IncidentStatus.RESOLVED, IncidentStatus.RESOLVED);
         }
         if (incident.getStartedAt() != null && resolvedAt.isBefore(incident.getStartedAt())) {
-            throw new BusinessRuleException("Incident cannot be resolved before it started");
+            throw new BusinessRuleException("O incidente não pode ser resolvido antes do início");
         }
         incident.setStatus(IncidentStatus.RESOLVED);
         incident.setResolvedAt(resolvedAt);
+        record(incident, "INCIDENT_RESOLVED", "Incidente resolvido", "SUCCESS");
         return incidentRepository.save(incident);
     }
 
@@ -101,6 +107,20 @@ public class IncidentService {
     public List<Incident> findBySystem(UUID systemId) {
         findSystem(systemId);
         return incidentRepository.findByMonitoredSystemIdOrderByStartedAtDesc(systemId);
+    }
+
+    @Transactional
+    public Incident update(UUID id, com.pulseops.dto.incident.UpdateIncidentRequest request) {
+        Incident incident = findIncident(id);
+        incident.setTitle(requiredText(request.title(), "Título", MAX_TITLE_LENGTH));
+        incident.setDescription(optionalText(request.description(), "Descrição", MAX_DESCRIPTION_LENGTH));
+        incident.setSeverity(request.severity());
+        record(incident, "INCIDENT_UPDATED", "Contexto do incidente atualizado", "INFO");
+        return incidentRepository.save(incident);
+    }
+
+    private void record(Incident incident, String type, String title, String severity) {
+        if (events != null) events.recordResource(incident.getMonitoredSystem(), type, severity, title, incident.getTitle(), incident.isAutomatic() ? "Monitoramento PulseOps" : "Conta PulseOps",incident.getId(),incident.getStatus().name());
     }
 
     private Incident createIncident(
@@ -111,11 +131,11 @@ public class IncidentService {
             OffsetDateTime startedAt,
             boolean automatic
     ) {
-        String normalizedTitle = requiredText(title, "Incident title", MAX_TITLE_LENGTH);
+        String normalizedTitle = requiredText(title, "Título do incidente", MAX_TITLE_LENGTH);
         String normalizedDescription = optionalText(
-                description, "Incident description", MAX_DESCRIPTION_LENGTH);
+                description, "Descrição do incidente", MAX_DESCRIPTION_LENGTH);
         if (severity == null) {
-            throw new BusinessRuleException("Incident severity is required");
+            throw new BusinessRuleException("A severidade do incidente é obrigatória");
         }
 
         Incident incident = new Incident();
@@ -124,9 +144,12 @@ public class IncidentService {
         incident.setDescription(normalizedDescription);
         incident.setSeverity(severity);
         incident.setStatus(IncidentStatus.OPEN);
+        if (startedAt != null && startedAt.isAfter(OffsetDateTime.now(clock))) throw new BusinessRuleException("O início do incidente não pode estar no futuro");
         incident.setStartedAt(startedAt == null ? OffsetDateTime.now(clock) : startedAt);
         incident.setAutomatic(automatic);
-        return incidentRepository.save(incident);
+        Incident saved = incidentRepository.save(incident);
+        record(saved, "INCIDENT_OPENED", "Incidente aberto", severity == IncidentSeverity.CRITICAL ? "CRITICAL" : "WARNING");
+        return saved;
     }
 
     private MonitoredSystem findSystem(UUID systemId) {
@@ -141,11 +164,11 @@ public class IncidentService {
 
     private String requiredText(String text, String field, int maximumLength) {
         if (text == null || text.isBlank()) {
-            throw new BusinessRuleException(field + " is required");
+            throw new BusinessRuleException(field + " é obrigatório");
         }
         String normalized = text.trim();
         if (normalized.length() > maximumLength) {
-            throw new BusinessRuleException(field + " exceeds " + maximumLength + " characters");
+            throw new BusinessRuleException(field + " excede " + maximumLength + " caracteres");
         }
         return normalized;
     }
@@ -156,7 +179,7 @@ public class IncidentService {
         }
         String normalized = text.trim();
         if (normalized.length() > maximumLength) {
-            throw new BusinessRuleException(field + " exceeds " + maximumLength + " characters");
+            throw new BusinessRuleException(field + " excede " + maximumLength + " caracteres");
         }
         return normalized;
     }

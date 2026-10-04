@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 @Service
 public class QualityService {
 
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.pulseops.service.EventRecorder events;
     private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
 
     private final TestReportRepository testReportRepository;
@@ -48,7 +49,7 @@ public class QualityService {
 
     @Transactional
     public QualitySummary createReport(UUID systemId, CreateTestReportCommand command) {
-        Objects.requireNonNull(command, "command is required");
+        Objects.requireNonNull(command, "command é obrigatório");
         validate(command);
         MonitoredSystem system = systemRepository.findById(systemId)
                 .orElseThrow(() -> new ResourceNotFoundException("Monitored system", systemId));
@@ -65,7 +66,9 @@ public class QualityService {
                 ? OffsetDateTime.now(clock)
                 : command.generatedAt());
 
-        return analyze(testReportRepository.save(report));
+        TestReport saved=testReportRepository.save(report);
+        if(events!=null) events.recordResource(system,"QUALITY_RECEIVED","INFO","Relatório de testes recebido",saved.getTotalTests()+" testes · origem: "+saved.getSource(),"Relatório importado via API",saved.getId(),"RECEIVED");
+        return analyze(saved);
     }
 
     @Transactional(readOnly = true)
@@ -81,15 +84,19 @@ public class QualityService {
 
     @Transactional(readOnly = true)
     public QualityOverviewResponse getOverview() {
-        List<MonitoredSystem> activeSystems = systemRepository.findAllByActiveTrueOrderByNameAsc();
-        Map<UUID, TestReport> latestBySystem = testReportRepository
-                .findAllForActiveSystemsOrderedBySystemAndGeneratedAt()
-                .stream()
-                .filter(report -> report.getMonitoredSystem().isActive())
-                .collect(Collectors.toMap(
-                        report -> report.getMonitoredSystem().getId(),
-                        Function.identity(),
-                        this::newerReport));
+        return getOverview("all",null,null);
+    }
+    @Transactional(readOnly=true)
+    public QualityOverviewResponse getOverview(String period,com.pulseops.domain.system.Environment environment,UUID systemId) {
+        period=normalizePeriod(period);
+        if(systemId!=null && !systemRepository.existsById(systemId)) throw new ResourceNotFoundException("Sistema",systemId);
+        java.time.OffsetDateTime end=OffsetDateTime.now(clock);
+        java.time.OffsetDateTime start=period.equals("all")?null:end.minus(periodDuration(period));
+        List<MonitoredSystem> activeSystems=systemRepository.findAll().stream().filter(s->environment==null||s.getEnvironment()==environment).filter(s->systemId==null||systemId.equals(s.getId())).toList();
+        var ids=activeSystems.stream().map(MonitoredSystem::getId).collect(java.util.stream.Collectors.toSet());
+        Map<UUID,TestReport> latestBySystem=com.pulseops.service.OperationalReadModel.latestReports(testReportRepository.findAll().stream()
+            .filter(r->ids.contains(r.getMonitoredSystem().getId())).filter(r->!r.getGeneratedAt().isAfter(end)).filter(r->start==null||!r.getGeneratedAt().isBefore(start)).toList())
+            .stream().collect(Collectors.toMap(r->r.getMonitoredSystem().getId(),Function.identity()));
 
         List<TestReport> latestReports = activeSystems.stream()
                 .map(system -> latestBySystem.get(system.getId()))
@@ -152,7 +159,7 @@ public class QualityService {
     }
 
     public QualitySummary analyze(TestReport report) {
-        Objects.requireNonNull(report, "report is required");
+        Objects.requireNonNull(report, "report é obrigatório");
         validate(report);
 
         BigDecimal passRate = percentage(report.getPassedTests(), report.getTotalTests());
@@ -183,7 +190,7 @@ public class QualityService {
             BigDecimal branchCoverage
     ) {
         if (totalTests == 0) {
-            return QualityClassification.CRITICAL;
+            return QualityClassification.NO_DATA;
         }
         if (failedTests == 0
                 && atLeast(passRate, "98.00")
@@ -210,10 +217,10 @@ public class QualityService {
     private void validate(CreateTestReportCommand command) {
         validateCounts(
                 command.totalTests(), command.passedTests(), command.failedTests(), command.skippedTests());
-        validateCoverage(command.lineCoverage(), "Line coverage");
-        validateCoverage(command.branchCoverage(), "Branch coverage");
+        validateCoverage(command.lineCoverage(), "Cobertura de linhas");
+        validateCoverage(command.branchCoverage(), "Cobertura de ramificações");
         if (command.generatedAt() != null && command.generatedAt().isAfter(OffsetDateTime.now(clock))) {
-            throw new BusinessRuleException("Test report generation time cannot be in the future");
+            throw new BusinessRuleException("A geração do relatório não pode estar no futuro");
         }
     }
 
@@ -221,27 +228,27 @@ public class QualityService {
         validateCounts(
                 report.getTotalTests(), report.getPassedTests(),
                 report.getFailedTests(), report.getSkippedTests());
-        validateCoverage(report.getLineCoverage(), "Line coverage");
-        validateCoverage(report.getBranchCoverage(), "Branch coverage");
+        validateCoverage(report.getLineCoverage(), "Cobertura de linhas");
+        validateCoverage(report.getBranchCoverage(), "Cobertura de ramificações");
     }
 
     private void validateCounts(int total, int passed, int failed, int skipped) {
         if (total < 0 || passed < 0 || failed < 0 || skipped < 0) {
-            throw new BusinessRuleException("Test counters cannot be negative");
+            throw new BusinessRuleException("Os contadores de testes não podem ser negativos");
         }
         long classifiedTests = (long) passed + failed + skipped;
         if (classifiedTests != total) {
             throw new BusinessRuleException(
-                    "Passed, failed and skipped tests must add up to total tests");
+                    "A soma de testes aprovados, reprovados e ignorados deve corresponder ao total");
         }
     }
 
     private void validateCoverage(BigDecimal coverage, String field) {
         if (coverage == null) {
-            throw new BusinessRuleException(field + " is required");
+            throw new BusinessRuleException(field + " é obrigatório");
         }
         if (coverage.compareTo(BigDecimal.ZERO) < 0 || coverage.compareTo(ONE_HUNDRED) > 0) {
-            throw new BusinessRuleException(field + " must be between 0 and 100");
+            throw new BusinessRuleException(field + " deve estar entre 0 e 100");
         }
     }
 
@@ -251,11 +258,11 @@ public class QualityService {
 
     private BigDecimal percentage(long numerator, long denominator) {
         if (denominator == 0) {
-            return BigDecimal.ZERO.setScale(2);
+            return null;
         }
         return BigDecimal.valueOf(numerator)
                 .multiply(ONE_HUNDRED)
-                .divide(BigDecimal.valueOf(denominator), 2, RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(denominator), 3, RoundingMode.HALF_UP);
     }
 
     private QualityReportResponse toReportResponse(TestReport report) {
@@ -275,7 +282,7 @@ public class QualityService {
                 summary.lineCoverage(),
                 summary.branchCoverage(),
                 summary.coverageScore(),
-                summary.classification());
+                summary.classification(),report.getSource());
     }
 
     private TestReport newerReport(TestReport left, TestReport right) {
@@ -287,15 +294,16 @@ public class QualityService {
             Function<TestReport, BigDecimal> extractor
     ) {
         if (reports.isEmpty()) {
-            return BigDecimal.ZERO.setScale(2);
+            return null;
         }
         return reports.stream()
                 .map(extractor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(reports.size()), 2, RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(reports.size()), 3, RoundingMode.HALF_UP);
     }
 
     private BigDecimal coverageScore(BigDecimal lineCoverage, BigDecimal branchCoverage) {
+        if(lineCoverage==null||branchCoverage==null)return null;
         return lineCoverage
                 .multiply(new BigDecimal("0.60"))
                 .add(branchCoverage.multiply(new BigDecimal("0.40")))
@@ -309,7 +317,7 @@ public class QualityService {
         return switch (value.toLowerCase()) {
             case "24h", "7d", "30d", "all" -> value.toLowerCase();
             default -> throw new BusinessRuleException(
-                    "Quality history period must be one of: 24h, 7d, 30d or all");
+                    "O período do histórico deve ser: 24h, 7d, 30d ou all");
         };
     }
 

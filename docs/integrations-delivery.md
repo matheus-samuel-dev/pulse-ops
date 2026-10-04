@@ -1,3 +1,5 @@
+> Registro histórico da entrega anterior. Os resultados atuais, contratos e limitações estão em [revisao-pulseops.md](revisao-pulseops.md) e [integrations.md](integrations.md).
+
 # Entrega — Integrações do Pulse Ops
 
 Validação concluída em 11/09/2026. Área disponível em **http://localhost:3000/integracoes**, com alias `/integrations`.

@@ -112,12 +112,12 @@ class IncidentServiceTest {
                     systemId,
                     new CreateIncidentCommand("   ", "description", IncidentSeverity.LOW, NOW_OFFSET)))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("title");
+                    .hasMessageContaining("Título");
             assertThatThrownBy(() -> incidentService.create(
                     systemId,
                     new CreateIncidentCommand("Valid", "description", null, NOW_OFFSET)))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("severity");
+                    .hasMessageContaining("severidade");
 
             verify(incidentRepository, never()).save(any());
         }
@@ -211,7 +211,7 @@ class IncidentServiceTest {
                     .isInstanceOf(InvalidStateTransitionException.class);
             assertThatThrownBy(() -> incidentService.resolve(futureIncident, NOW_OFFSET))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("before it started");
+                    .hasMessageContaining("antes do início");
 
             verify(incidentRepository, never()).save(any());
         }

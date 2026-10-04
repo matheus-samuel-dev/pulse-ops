@@ -22,7 +22,7 @@ import java.util.Objects;
 @Service
 public class IncidentAutomationService {
 
-    public static final String AUTOMATIC_INCIDENT_TITLE = "Automated availability incident";
+    public static final String AUTOMATIC_INCIDENT_TITLE = "Indisponibilidade detectada automaticamente";
     private static final Collection<IncidentStatus> ACTIVE_STATUSES =
             EnumSet.of(IncidentStatus.OPEN, IncidentStatus.INVESTIGATING);
 
@@ -63,11 +63,12 @@ public class IncidentAutomationService {
             MonitoringDecision decision,
             List<HealthCheck> previousChecks
     ) {
-        Objects.requireNonNull(system, "system is required");
-        Objects.requireNonNull(currentCheck, "currentCheck is required");
-        Objects.requireNonNull(decision, "decision is required");
+        Objects.requireNonNull(system, "system é obrigatório");
+        Objects.requireNonNull(currentCheck, "currentCheck é obrigatório");
+        Objects.requireNonNull(decision, "decision é obrigatório");
         previousChecks = previousChecks == null ? List.of() : previousChecks;
 
+        if ("SECURITY_POLICY".equals(currentCheck.getFailureType())) return;
         List<Incident> activeAutomaticIncidents = activeAutomaticIncidents(system);
         if (!currentCheck.isSuccess()) {
             long consecutiveFailures = 1 + countConsecutiveFailures(previousChecks);
@@ -80,9 +81,7 @@ public class IncidentAutomationService {
                         AUTOMATIC_INCIDENT_TITLE,
                         automaticDescription(system, decision, consecutiveFailures),
                         severity,
-                        currentCheck.getCheckedAt() == null
-                                ? OffsetDateTime.now(clock)
-                                : currentCheck.getCheckedAt()
+                        previousChecks.stream().takeWhile(check -> !check.isSuccess()).map(HealthCheck::getCheckedAt).filter(Objects::nonNull).min(OffsetDateTime::compareTo).orElse(currentCheck.getCheckedAt() == null ? OffsetDateTime.now(clock) : currentCheck.getCheckedAt())
                 );
             } else if (consecutiveFailures >= failuresForCriticalSeverity) {
                 activeAutomaticIncidents.stream()
@@ -150,7 +149,7 @@ public class IncidentAutomationService {
             MonitoringDecision decision,
             long consecutiveFailures
     ) {
-        return "PulseOps detected %d consecutive failed health checks for %s. Latest result: %s"
+        return "O PulseOps detectou %d verificações consecutivas com falha em %s. Resultado mais recente: %s"
                 .formatted(consecutiveFailures, system.getName(), decision.reason());
     }
 }

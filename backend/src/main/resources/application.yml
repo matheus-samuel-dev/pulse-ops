@@ -62,31 +62,13 @@ springdoc:
 
 pulseops:
   integrations:
+    encryption-key: ${INTEGRATIONS_ENCRYPTION_KEY:${pulseops.security.jwt.secret}}
     stale-after: ${INTEGRATIONS_STALE_AFTER:PT5M}
     check-cooldown: ${INTEGRATIONS_CHECK_COOLDOWN:PT1M}
     reporting-zone: ${INTEGRATIONS_REPORTING_ZONE:America/Sao_Paulo}
-    systems:
-      ai-web-auditor:
-        system-id: ${AI_WEB_AUDITOR_SYSTEM_ID:}
-        public-url: ${AI_WEB_AUDITOR_URL:}
-      arena-predict:
-        system-id: ${ARENA_PREDICT_SYSTEM_ID:}
-        public-url: ${ARENA_PREDICT_URL:}
-      playspace:
-        system-id: ${PLAYSPACE_SYSTEM_ID:}
-        public-url: ${PLAYSPACE_URL:}
-      logitrack:
-        system-id: ${LOGITRACK_SYSTEM_ID:}
-        public-url: ${LOGITRACK_URL:}
-      helpdesk:
-        system-id: ${HELPDESK_SYSTEM_ID:}
-        public-url: ${HELPDESK_URL:}
-      hospital:
-        system-id: ${HOSPITAL_SYSTEM_ID:}
-        public-url: ${HOSPITAL_URL:}
   monitoring:
     enabled: ${MONITORING_ENABLED:true}
-    fixed-delay-ms: ${MONITORING_INTERVAL_MS:60000}
+    fixed-delay-ms: ${MONITORING_INTERVAL_MS:10000}
     initial-delay-ms: ${MONITORING_INITIAL_DELAY_MS:15000}
     concurrency: ${MONITORING_CONCURRENCY:4}
     queue-capacity: ${MONITORING_QUEUE_CAPACITY:256}
@@ -107,4 +89,5 @@ pulseops:
     cors:
       allowed-origin-patterns: ${CORS_ALLOWED_ORIGINS:http://localhost:*}
   demo:
+    seed-enabled: ${DEMO_SEED_ENABLED:false}
     read-only: ${DEMO_READ_ONLY:false}

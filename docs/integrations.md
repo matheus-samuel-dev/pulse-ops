@@ -1,71 +1,111 @@
-# Integrações do Pulse Ops
+# Integrações operacionais
 
-A área `/integracoes` (também acessível por `/integrations`) apresenta o catálogo do ecossistema, com destaque para AI Web Auditor, disponibilidade, saúde, atividade e detalhes. Reutiliza o layout, tokens, componentes MUI, autenticação e monitoramento existentes. Não adiciona uma segunda base de eventos nem um cadastro paralelo de sistemas.
+O Pulse Ops observa e mantém evidências. O AI Web Auditor executa auditorias web; o Nexus Flow executa automações. A página `/integracoes` apresenta essas duas integrações disponíveis para configuração. Sistemas de negócio não fazem parte do catálogo de integrações.
 
-## Dados e vínculos
+## Configuração pela interface
 
-O catálogo contém AI Web Auditor, Arena Predict, PlaySpace, LogiTrack, HelpDesk e Gestão Hospitalar. Nomes, descrições e ícones são metadados; métricas vêm exclusivamente dos registros persistidos.
+1. Abra **Integrações → Configurar AI Web Auditor** ou **Configurar Nexus Flow**.
+2. Informe a URL base do conector, endpoint de conexão, timeout e caminho da API/webhook. Não é necessário cadastrar o serviço remoto em Sistemas.
+3. Informe o token Bearer quando exigido. A credencial é enviada pelo backend ao endpoint de conexão e às ações; nunca é devolvida ao navegador.
+4. Opcionalmente configure a origem pública da interface para abrir relatórios.
+5. Salve e use **Testar conexão**. Uma resposta HTTP 2xx do endpoint configurado comprova aquela comunicação; não garante que todas as ações ou contratos do serviço estejam autorizados.
+6. Abra o sistema alvo para solicitar auditoria ou workflow e consultar as execuções persistidas.
 
-Cada entrada procura um `MonitoredSystem` pelo UUID configurado. Sem UUID, procura pelo nome exato do catálogo, ignorando maiúsculas. Um UUID explícito inexistente não faz fallback. Sem vínculo, a interface mostra **Não configurado**. A URL pública sozinha não cria um vínculo nem comprova conexão.
+Sem configuração, o estado é **Não configurada**; antes de um teste válido, **Aguardando teste**. Falhas apresentam a mensagem real sanitizada. Evidências com mais de cinco minutos deixam de comprovar uma conexão atual (`INTEGRATIONS_STALE_AFTER`). O cooldown de um minuto reutiliza o registro recente e informa que nenhuma nova requisição ocorreu (`INTEGRATIONS_CHECK_COOLDOWN`). Alterar a configuração invalida o cache anterior.
 
-Cadastre o destino de monitoramento pela área **Sistemas**, com uma conta ADMIN. Defina base URL, health endpoint, código HTTP esperado, timeout e limite de latência usando a validação existente. Para associar um sistema com outro nome, configure seu UUID no backend:
+`integration_probes` contém os testes próprios dos conectores. Eles não contam como `health_checks` de uma aplicação, não alteram seu estado nem abrem incidentes nesse sistema. A comunicação bem-sucedida deriva de probe ou execução HTTP 2xx persistida; conclusão e relatório derivam de `integration_runs`. Relatórios de CI não são usados como resultados do AI Web Auditor. As antigas variáveis de associação por system-id foram retiradas da configuração normal; conexões persistidas são migradas copiando seu destino, sem manter essa dependência.
 
-| Sistema | Vínculo com o cadastro | Link público opcional |
-| --- | --- | --- |
-| AI Web Auditor | `AI_WEB_AUDITOR_SYSTEM_ID` | `AI_WEB_AUDITOR_URL` |
-| Arena Predict | `ARENA_PREDICT_SYSTEM_ID` | `ARENA_PREDICT_URL` |
-| PlaySpace | `PLAYSPACE_SYSTEM_ID` | `PLAYSPACE_URL` |
-| LogiTrack | `LOGITRACK_SYSTEM_ID` | `LOGITRACK_URL` |
-| HelpDesk | `HELPDESK_SYSTEM_ID` | `HELPDESK_URL` |
-| Gestão Hospitalar | `HOSPITAL_SYSTEM_ID` | `HOSPITAL_URL` |
-
-As variáveis estão documentadas em `.env.example` e repassadas pelo Compose. Reinicie o backend após alterar configurações. O link público aceita apenas HTTP/HTTPS, sem credenciais, query ou fragmento; somente a origem é publicada. Não coloque tokens nessas variáveis. URLs internas e health endpoints ficam protegidos nos DTOs da área.
-
-## Status e métricas
-
-- **Online**: check recente bem-sucedido, latência dentro do limite e sem estado operacional degradado.
-- **Atenção**: resposta inesperada recuperável (por exemplo HTTP 4xx), latência elevada ou estado degradado calculado pelo monitoramento existente.
-- **Offline**: falha de transporte, timeout, HTTP 5xx ou check malsucedido com estado DOWN.
-- **Desconhecido**: nenhum check, check futuro/desatualizado ou monitoramento pausado. Ausência de configuração tem identificação própria.
-
-`INTEGRATIONS_STALE_AFTER=PT5M` define a validade da evidência. A saúde é a porcentagem de checks bem-sucedidos nas últimas 24 horas, com no mínimo cinco amostras; abaixo disso, mostra `—`. Não representa um SLA contratado. “Com incidentes” conta entradas em Atenção ou Offline, e não a quantidade de tickets de incidente.
-
-“Sistemas conectados” conta vínculos cadastrados, incluindo os temporariamente indisponíveis. “Eventos processados hoje” soma checks registrados e relatórios recebidos desde a meia-noite em `INTEGRATIONS_REPORTING_ZONE` (padrão `America/Sao_Paulo`), sem duplicar IDs compartilhados. Não conta webhooks nem artefatos não modelados.
-
-A sincronização corresponde a `TestReport.createdAt`, o recebimento do relatório. A data de geração é `generatedAt`, apresentada separadamente. Um health check não altera a sincronização de dados.
+Configurações, provas e execuções pertencem à conta. Credenciais usam AES-256-GCM. Um campo de token vazio preserva a credencial existente; sua remoção precisa ser explícita.
 
 ## AI Web Auditor
 
-A integração reutiliza seu `MonitoredSystem`, histórico de `HealthCheck` e relatórios de `TestReport` recebidos pelo contrato existente `POST /api/quality/reports`. O envio deve informar o ID do sistema e autenticar com perfil autorizado, conforme o contrato de qualidade já documentado na API.
+Contrato implementado a partir da API existente do serviço:
 
-O código atual não fornece contagens de screenshots, artefatos ou estado de webhook. A página não inventa essas métricas. Para conectar a instância externa efetiva, configure seu destino de monitoramento, vínculo e URL pública, e mantenha o produtor enviando relatórios pelo contrato existente. Nenhum endereço de produção foi presumido.
+```http
+POST /api/audits
+Authorization: Bearer <token do AI Web Auditor>
+Idempotency-Key: <UUID da execução no Pulse Ops>
+Content-Type: application/json
+```
 
-## API e autorização
+```json
+{
+  "url": "https://aplicacao-autorizada.example.org",
+  "projectName": "Nome do sistema",
+  "authorizationConfirmed": true,
+  "allowDestructiveActions": false,
+  "testEnvironment": false
+}
+```
 
-| Método e endpoint | Perfil | Resultado |
-| --- | --- | --- |
-| `GET /api/integrations` | ADMIN, DEVELOPER, VIEWER | Catálogo, resumo, modo de leitura e horário da consulta |
-| `GET /api/integrations/events` | ADMIN, DEVELOPER, VIEWER | Até 12 eventos nos últimos 30 dias |
-| `GET /api/integrations/{id}` | ADMIN, DEVELOPER, VIEWER | Detalhes e métricas de uma entrada |
-| `GET /api/integrations/{id}/events` | ADMIN, DEVELOPER, VIEWER | Atividade da entrada |
-| `POST /api/integrations/{id}/health-check` | ADMIN, DEVELOPER | Resultado normalizado e persistido |
+O operador confirma que possui autorização para auditar o alvo. O Pulse Ops exige `id` UUID e `status` reconhecido na resposta. Registra PENDING, RUNNING, COMPLETED, FAILED ou CANCELLED; não considera uma solicitação aceita como auditoria concluída.
 
-`id` é o slug fixo do catálogo: `ai-web-auditor`, `arena-predict`, `playspace`, `logitrack`, `helpdesk` ou `hospital`. Entrada desconhecida retorna 404; entrada sem configuração ou pausada retorna 422 no teste. O modo demonstrativo bloqueia escritas também no backend. Não há endpoint de cadastro nesta área; a administração permanece no fluxo existente de Sistemas.
+**Consultar resultado** chama `GET /api/audits/{id}` com o mesmo Bearer. Somente um `overallScore` inteiro entre 0 e 100 efetivamente devolvido por uma auditoria COMPLETED é exibido. Não é convertido em cobertura de linhas/ramificações. Quando concluída, a origem pública configurada permite abrir `/audits/{id}`.
 
-GETs consultam o banco sem fazer chamadas externas. O frontend atualiza a cada 60 segundos somente enquanto a aba está visível, sem sobrepor consultas, e cancela requisições ao desmontar. O teste manual usa exclusivamente a configuração persistida e reaproveita checks recentes durante `INTEGRATIONS_CHECK_COOLDOWN=PT1M` (mínimo 30 segundos). A resposta inclui `cached` e `nextCheckAt`. O bloqueio em memória serializa chamadas por entrada dentro da instância; o cooldown persistido também funciona após reinício, mas não substitui um lock distribuído em deployments com várias réplicas.
+Credencial recusada, timeout, HTTP inesperado e contrato inválido apresentam erro humano. A chamada possui limite de dez segundos. O Pulse Ops não instala Lighthouse, Playwright ou outro executor de auditoria para realizar esse trabalho internamente.
 
-## Segurança e operação
+Para conectar seu serviço real: publique uma API HTTPS alcançável pelo backend, escolha um endpoint de saúde adequado e forneça um token real do AI Web Auditor. Uma instalação apenas em `localhost`/rede privada é rejeitada pelo ambiente normal. Use um gateway público autenticado ou uma implantação com conectividade e política de saída específica; não habilite acesso amplo a redes internas em produção.
 
-O teste mantém o pipeline de monitoramento, registro de resultado e incidentes automáticos existentes. O timeout inclui validação/resolução DNS e chamada HTTP. Endereços resolvidos e validados são fixados no cliente de rede, evitando uma segunda resolução sujeita a DNS rebinding. Redirecionamentos não são seguidos. Erros de DNS, recusa, timeout e respostas HTTP inesperadas são normalizados, sem expor mensagens internas nos DTOs da nova área.
+## Nexus Flow
 
-A política existente de URLs bloqueia destinos privados por padrão. `MONITORING_ALLOW_PRIVATE_NETWORKS` deve seguir a política de implantação da organização; sua habilitação permite destinos privados e não deve ser usada como atalho para aceitar URLs de usuários não confiáveis. Nenhum endpoint da nova área aceita uma URL arbitrária enviada pelo frontend.
+Informe o caminho do webhook publicado pelo workflow, por exemplo `/webhook/pulseops`. O payload enviado é:
 
-A migration `V3` adiciona apenas um índice de recebimento de relatórios. Reutilizam-se `MonitoredSystem`, `HealthCheck`, `TestReport` e `OperationalEventResponse`. Não há entidade Integration/IntegrationEvent nem uma nova tabela de logs.
+```json
+{
+  "source": "pulseops",
+  "type": "SYSTEM_DOWN",
+  "eventId": "UUID do evento",
+  "runId": "UUID da execução",
+  "systemId": "UUID do sistema",
+  "systemName": "Nome do sistema",
+  "url": "https://sistema.example.org"
+}
+```
 
-O Compose preserva o modo demonstrativo existente por padrão: `DEMO_READ_ONLY=true`, `VITE_DEMO_MODE=true`, `MONITORING_ENABLED=false`. O banner identifica dados demonstrativos já gerados pelo seeder do projeto. Em produção, use a configuração de segurança e perfil apropriados do projeto; os novos sistemas não recebem métricas fictícias.
+Chamadas manuais usam `MANUAL_REQUEST`. O token configurado vai em Authorization Bearer e o UUID da execução vai em Idempotency-Key.
 
-## Validação
+A opção **Enviar evento automaticamente quando um sistema ficar indisponível** cria uma fila persistente junto da transação do evento. O scheduler entrega após o commit. O identificador único evita gerar duas execuções do mesmo evento; o receptor deve usar Idempotency-Key para deduplicar requisições após um reinício ou falha de transporte.
 
-Execute `mvn clean verify` no backend com Java 21 e Docker disponível para Testcontainers. No frontend: `npm run test:run`, `npm run lint`, `npm run build`. O build inclui TypeScript. Depois execute `docker compose config --quiet`, `docker compose build`, `docker compose up -d`, `docker compose ps` e consulte logs e `/actuator/health`.
+HTTP 2xx significa **Recebida pelo Nexus Flow**, não sucesso do workflow. Para informar progresso/conclusão, o workflow deve chamar:
 
-Os resultados concretos desta entrega estão em [integrations-delivery.md](integrations-delivery.md).
+```http
+PATCH /api/connections/runs/{runId}
+Authorization: Bearer <JWT do Pulse Ops da conta proprietária>
+Content-Type: application/json
+```
+
+```json
+{"state":"COMPLETED","externalId":"identificador-da-execucao-no-nexus"}
+```
+
+Estados aceitos: RUNNING, COMPLETED, FAILED e CANCELLED. Atualizações de outras contas e alterações após estado terminal são rejeitadas. O JWT do Pulse Ops expira; o serviço deve obter uma sessão válida e mantê-la fora do frontend. Não há token de serviço permanente nem assinatura HMAC de callback nesta arquitetura.
+
+Não foi encontrado contrato/repositório real do Nexus Flow neste workspace. Portanto este é o contrato HTTP do adaptador do Pulse Ops: configure um workflow para consumi-lo e faça o callback. O fluxo foi exercitado contra servidor controlado nos testes, sem alegar que um workflow externo já está em operação. Entregas que falham ficam registradas como FAILED; não há política automática de múltiplas tentativas ou garantia de entrega exatamente uma vez.
+
+## Endpoints do Pulse Ops
+
+| Método e caminho | Função |
+| --- | --- |
+| GET `/api/integrations` | Catálogo e métricas persistidas |
+| GET `/api/integrations/{slug}` | Estado e detalhes |
+| POST `/api/integrations/{slug}/health-check` | Verificação HTTP real, com cooldown informado |
+| GET/PUT/DELETE `/api/connections/{slug}` | Consultar/configurar/desconectar vínculo da conta |
+| POST `/api/connections/{slug}/actions` | Solicitar ação com systemId e authorizationConfirmed |
+| GET `/api/connections/runs?systemId=...&page=0&size=20` | Histórico paginado da conta |
+| POST `/api/connections/runs/{id}/refresh` | Consultar resultado no AI Web Auditor |
+| PATCH `/api/connections/runs/{id}` | Receber atualização autenticada do Nexus Flow |
+| POST `/api/quality/reports` | Receber resultados reais de testes/CI; contrato distinto de auditorias web |
+| GET `/api/events` | Timeline real de eventos operacionais |
+
+Escritas exigem ADMIN ou DEVELOPER, além de propriedade dos recursos. Todas as rotas de dados exigem autenticação. Os endpoints Swagger/OpenAPI documentam os campos de cada contrato.
+
+## Segurança
+
+Todas as chamadas externas reutilizam a política SSRF: HTTP/HTTPS, validação do destino e DNS, endereços fixados no transporte, ausência de redirects e bloqueio de redes privadas/reservadas/metadados por padrão. Respostas têm limite de 2 MB; erros não ecoam corpo remoto, token ou stack trace.
+
+Configuração de origem pública não altera o destino da API nem comprova disponibilidade. Uma página com URL pública e sem registros continua sem métricas. A permissão para usar um sistema remoto deve ser obtida pelo proprietário da integração.
+
+## Testar sem dependências externas
+
+O Compose de teste separado inicia um servidor HTTP com saúde, endpoints 503/lentos, API de auditoria e webhook. Execute os comandos de E2E do README. Os dados controlados ficam exclusivamente no volume/rede do ambiente de testes. Para validar serviços reais depois, substitua o cadastro remoto e token, teste a conexão, solicite uma ação e confira HTTP, estado e resultado persistidos.
+

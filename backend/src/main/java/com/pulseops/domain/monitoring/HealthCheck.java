@@ -47,6 +47,10 @@ public class HealthCheck extends AuditableEntity {
     @Column(name = "error_message", length = 2000)
     private String errorMessage;
 
+    @Column(name="failure_type",nullable=false,length=30) private String failureType="LEGACY_UNCLASSIFIED";
+    public String getFailureType(){return failureType;}
+    public void setFailureType(String value){failureType=value;}
+
     public HealthCheck() {
     }
 

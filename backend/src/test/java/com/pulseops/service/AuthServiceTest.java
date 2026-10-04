@@ -100,10 +100,10 @@ class AuthServiceTest {
     }
 
     @Test
-    void shouldRegisterPublicAccountsAsViewerAndIssueToken() {
-        User user = user("new.user@pulseops.io", UserRole.VIEWER);
+    void shouldRegisterPublicAccountsAsDeveloperAndIssueToken() {
+        User user = user("new.user@pulseops.io", UserRole.DEVELOPER);
         Instant expiration = Instant.parse("2026-08-27T16:00:00Z");
-        when(userService.create("New User", " NEW.USER@pulseops.io ", "strong-pass", UserRole.VIEWER))
+        when(userService.create("New User", " NEW.USER@pulseops.io ", "strong-pass", UserRole.DEVELOPER))
                 .thenReturn(user);
         when(jwtService.generateToken(any(PulseOpsPrincipal.class))).thenReturn("registration-token");
         when(jwtService.extractExpiration("registration-token")).thenReturn(expiration);
@@ -111,13 +111,13 @@ class AuthServiceTest {
         AuthResponse response = authService.register(
                 new RegisterRequest("New User", " NEW.USER@pulseops.io ", "strong-pass"));
 
-        verify(userService).create("New User", " NEW.USER@pulseops.io ", "strong-pass", UserRole.VIEWER);
+        verify(userService).create("New User", " NEW.USER@pulseops.io ", "strong-pass", UserRole.DEVELOPER);
         ArgumentCaptor<PulseOpsPrincipal> principalCaptor = ArgumentCaptor.forClass(PulseOpsPrincipal.class);
         verify(jwtService).generateToken(principalCaptor.capture());
-        assertThat(principalCaptor.getValue().role()).isEqualTo("VIEWER");
+        assertThat(principalCaptor.getValue().role()).isEqualTo("DEVELOPER");
         assertThat(response.token()).isEqualTo("registration-token");
         assertThat(response.expiresAt()).isEqualTo(expiration);
-        assertThat(response.user().role()).isEqualTo(UserRole.VIEWER);
+        assertThat(response.user().role()).isEqualTo(UserRole.DEVELOPER);
         verifyNoInteractions(authenticationManager, userRepository);
     }
 

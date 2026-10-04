@@ -17,7 +17,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { PageHeader } from '../components/common/PageHeader';
 import { Panel } from '../components/common/Panel';
@@ -27,7 +27,7 @@ import { SystemStatusChip } from '../components/dashboard/SystemStatusChip';
 import { SystemFormDialog } from '../components/systems/SystemFormDialog';
 import { getApiErrorMessage } from '../services/api';
 import { systemsService } from '../services/systemsService';
-import { getDashboard } from '../services/dashboardService';
+import { api } from '../services/api';
 import { qualityService } from '../services/qualityService';
 import { isDemoMode } from '../config/demo';
 import type { Environment, MonitoredSystem, MonitoredSystemInput, QualityReport, SystemHealth, SystemStatus } from '../types/api';
@@ -35,6 +35,7 @@ import type { Environment, MonitoredSystem, MonitoredSystemInput, QualityReport,
 export function SystemsPage() {
   const theme = useTheme();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const [systems, setSystems] = useState<MonitoredSystem[]>([]);
   const [health, setHealth] = useState<Map<string, SystemHealth>>(new Map());
@@ -44,17 +45,17 @@ export function SystemsPage() {
   const [query, setQuery] = useState('');
   const [environment, setEnvironment] = useState<Environment | 'ALL'>('ALL');
   const [status, setStatus] = useState<SystemStatus | 'ALL'>('ALL');
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(searchParams.get('novo') === '1');
   const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
     try {
       const [systemData, dashboard, qualityData] = await Promise.all([
-        systemsService.list(), getDashboard({ period: '24h', environment: 'ALL' }), qualityService.overview(),
+        systemsService.list(), api.get<SystemHealth[]>('/dashboard/health', { params: { period: '24h' } }), qualityService.overview('24h'),
       ]);
       setSystems(systemData);
-      setHealth(new Map(dashboard.health.map((item) => [item.id, item])));
+      setHealth(new Map(dashboard.data.map((item) => [item.id, item])));
       setQuality(new Map(qualityData.systems.map((item) => [item.systemId, item])));
     } catch (requestError) { setError(getApiErrorMessage(requestError)); }
     finally { setLoading(false); }
@@ -72,30 +73,30 @@ export function SystemsPage() {
     try {
       const created = await systemsService.create(input);
       setSystems((current) => [...current, created].sort((a, b) => a.name.localeCompare(b.name)));
-      setDialogOpen(false); setNotice('Sistema cadastrado e pronto para monitoramento.');
+      setDialogOpen(false); setSearchParams({}); setNotice('Sistema cadastrado e pronto para monitoramento.');
     } catch (requestError) { setNotice(getApiErrorMessage(requestError)); throw requestError; }
   };
 
   return (
     <Box px={{ xs: 2, sm: 3, xl: 4 }} py={{ xs: 2.5, md: 3.5 }} maxWidth={1680} mx="auto">
       <PageHeader title="Sistemas" description="Aplicações, APIs e serviços acompanhados pelo PulseOps" eyebrow="Observabilidade"
-        actions={user?.role === 'ADMIN' && !isDemoMode && <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)}>Cadastrar sistema</Button>} />
+        actions={(user?.role === 'ADMIN' || user?.role === 'DEVELOPER') && !isDemoMode && <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)}>Cadastrar sistema</Button>} />
       <Panel sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.25}>
           <TextField size="small" placeholder="Buscar por nome, descrição ou URL" value={query} onChange={(event) => setQuery(event.target.value)} sx={{ flex: 1 }}
             InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }} />
           <TextField select size="small" label="Ambiente" value={environment} onChange={(event) => setEnvironment(event.target.value as Environment | 'ALL')} sx={{ minWidth: 170 }}>
-            <MenuItem value="ALL">Todos</MenuItem><MenuItem value="PRODUCTION">Produção</MenuItem><MenuItem value="STAGING">Staging</MenuItem><MenuItem value="DEVELOPMENT">Desenvolvimento</MenuItem>
+            <MenuItem value="ALL">Todos</MenuItem><MenuItem value="PRODUCTION">Produção</MenuItem><MenuItem value="STAGING">Homologação</MenuItem><MenuItem value="DEVELOPMENT">Desenvolvimento</MenuItem>
           </TextField>
-          <TextField select size="small" label="Status" value={status} onChange={(event) => setStatus(event.target.value as SystemStatus | 'ALL')} sx={{ minWidth: 160 }}>
-            <MenuItem value="ALL">Todos</MenuItem><MenuItem value="OPERATIONAL">Operacional</MenuItem><MenuItem value="DEGRADED">Atenção</MenuItem><MenuItem value="DOWN">Indisponível</MenuItem><MenuItem value="UNKNOWN">Sem dados</MenuItem>
+          <TextField select size="small" label="Estado" value={status} onChange={(event) => setStatus(event.target.value as SystemStatus | 'ALL')} sx={{ minWidth: 160 }}>
+            <MenuItem value="ALL">Todos</MenuItem><MenuItem value="OPERATIONAL">Operacional</MenuItem><MenuItem value="DEGRADED">Degradado</MenuItem><MenuItem value="DOWN">Indisponível</MenuItem><MenuItem value="UNKNOWN">Aguardando primeira verificação</MenuItem><MenuItem value="MAINTENANCE">Em manutenção</MenuItem><MenuItem value="CONFIGURATION_REQUIRED">Configuração inválida</MenuItem>
           </TextField>
         </Stack>
       </Panel>
 
       {loading && <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(2,1fr)', xl: 'repeat(3,1fr)' }} gap={2}>{[1,2,3,4].map((item) => <Skeleton key={item} variant="rounded" height={225} />)}</Box>}
       {!loading && error && <ViewState kind="error" title="Falha ao carregar sistemas" description={error} actionLabel="Tentar novamente" onAction={() => void load()} />}
-      {!loading && !error && filtered.length === 0 && <ViewState kind="empty" title="Nenhum sistema encontrado" description="Ajuste os filtros ou cadastre a primeira aplicação monitorada." />}
+      {!loading && !error && filtered.length === 0 && <ViewState kind="empty" title={systems.length ? "Nenhum sistema encontrado" : "Cadastre seu primeiro sistema"} description="Cadastre uma aplicação, execute uma verificação e acompanhe os resultados reais." actionLabel={!systems.length && user?.role !== 'VIEWER' ? "Cadastrar sistema" : undefined} onAction={() => setDialogOpen(true)} />}
       {!loading && !error && filtered.length > 0 && (
         <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(2,1fr)', xl: 'repeat(3,1fr)' }} gap={2}>
           {filtered.map((system) => (
@@ -115,10 +116,10 @@ export function SystemsPage() {
                 {!system.active && <Chip size="small" color="default" label="Pausado" />}
               </Stack>
               <Box display="grid" gridTemplateColumns="repeat(2,minmax(0,1fr))" gap={1.2} mt={2}>
-                <SystemMetric label="Uptime · 24h" value={formatPercent(health.get(system.id)?.uptime ?? 0)} />
+                <SystemMetric label="Disponibilidade · 24h" value={formatPercent(health.get(system.id)?.uptime ?? null)} />
                 <SystemMetric label="Latência" value={formatLatency(health.get(system.id)?.latencyMs ?? null)} />
                 <SystemMetric label="Cobertura" value={quality.has(system.id) ? formatPercent(quality.get(system.id)!.coverageScore) : '—'} />
-                <SystemMetric label="Último check" value={formatRelativeTime(health.get(system.id)?.lastCheckedAt ?? null)} />
+                <SystemMetric label="Última verificação" value={formatRelativeTime(health.get(system.id)?.lastCheckedAt ?? null)} />
               </Box>
               <Stack direction="row" alignItems="center" justifyContent="space-between" mt={1.8} pt={1.5} borderTop="1px solid" borderColor="divider">
                 <Typography variant="caption" color="text.secondary" noWrap maxWidth="78%">{system.baseUrl}</Typography>

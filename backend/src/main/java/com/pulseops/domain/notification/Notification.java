@@ -48,6 +48,15 @@ public class Notification extends AuditableEntity {
     @Column(name = "is_read", nullable = false)
     private boolean read;
 
+    @Column(name="event_id") private java.util.UUID eventId;
+    @Column(name="system_id") private java.util.UUID systemId;
+    @Column(name="resource_id") private java.util.UUID resourceId;
+    public java.util.UUID getEventId(){return eventId;}
+    public void setEventId(java.util.UUID v){eventId=v;}
+    public java.util.UUID getSystemId(){return systemId;}
+    public void setSystemId(java.util.UUID v){systemId=v;}
+    public java.util.UUID getResourceId(){return resourceId;}
+    public void setResourceId(java.util.UUID v){resourceId=v;}
     public Notification() {
     }
 

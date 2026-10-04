@@ -1,77 +1,47 @@
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
-import {
-  alpha,
-  Box,
-  Chip,
-  InputAdornment,
-  MenuItem,
-  Skeleton,
-  Stack,
-  TextField,
-  Typography,
-  useTheme,
-} from '@mui/material';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Box, Chip, MenuItem, Pagination, Stack, TextField, Typography } from '@mui/material';
+import { useCallback, useEffect, useState } from 'react';
 import { PageHeader } from '../components/common/PageHeader';
 import { Panel } from '../components/common/Panel';
 import { ViewState } from '../components/common/ViewState';
 import { environmentLabels } from '../components/dashboard/dashboardFormatters';
+import { eventsService, type RecordedEvent } from '../services/eventsService';
+import { systemsService } from '../services/systemsService';
 import { getApiErrorMessage } from '../services/api';
-import { reportsService } from '../services/reportsService';
-import type { OperationalEvent, OperationalReport } from '../types/api';
-
-const typeLabels = { HEALTH_CHECK: 'Health check', INCIDENT: 'Incidente', DEPLOYMENT: 'Deploy', QUALITY: 'Qualidade' } as const;
-const impactLabels = { INFO: 'Informativo', SUCCESS: 'Sucesso', WARNING: 'Atenção', CRITICAL: 'Crítico' } as const;
-
+import type { MonitoredSystem } from '../types/api';
+const severityLabels: Record<string, string> = { INFO: 'Informativo', SUCCESS: 'Sucesso', WARNING: 'Atenção', CRITICAL: 'Crítico', ERROR: 'Falha' };
 export function AuditPage() {
-  const theme = useTheme();
-  const [report, setReport] = useState<OperationalReport | null>(null);
+  const [systems, setSystems] = useState<MonitoredSystem[]>([]);
+  const [events, setEvents] = useState<RecordedEvent[]>([]);
   const [query, setQuery] = useState('');
-  const [systemId, setSystemId] = useState('ALL');
-  const [impact, setImpact] = useState<OperationalEvent['impact'] | 'ALL'>('ALL');
+  const [systemId, setSystemId] = useState('');
+  const [severity, setSeverity] = useState('');
+  const [page, setPage] = useState(0);
+  const [pages, setPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true); setError(null);
-    try { setReport(await reportsService.operational('30d')); }
-    catch (requestError) { setError(getApiErrorMessage(requestError)); }
-    finally { setLoading(false); }
-  }, []);
-  useEffect(() => { void load(); }, [load]);
-
-  const systems = useMemo(() => {
-    const unique = new Map(report?.feed.map((event) => [event.systemId, event.systemName]) ?? []);
-    return [...unique.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [report]);
-  const events = useMemo(() => report?.feed.filter((event) =>
-    (systemId === 'ALL' || event.systemId === systemId)
-    && (impact === 'ALL' || event.impact === impact)
-    && `${event.title} ${event.description ?? ''} ${event.systemName} ${event.source}`.toLowerCase().includes(query.toLowerCase())) ?? [],
-  [report, systemId, impact, query]);
-
-  return <Box px={{ xs: 2, sm: 3, xl: 4 }} py={{ xs: 2.5, md: 3.5 }} maxWidth={1500} mx="auto">
-    <PageHeader title="Auditoria" description="Trilha correlacionada e não sensível das operações do workspace" eyebrow="Governança" />
-    <Panel sx={{ p: 2, mb: 2 }}>
-      <Stack direction={{ xs: 'column', md: 'row' }} gap={1.2}>
-        <TextField size="small" placeholder="Buscar por ação, sistema ou origem" value={query} onChange={(event) => setQuery(event.target.value)} sx={{ flex: 1 }} InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }} />
-        <TextField select size="small" label="Sistema" value={systemId} onChange={(event) => setSystemId(event.target.value)} sx={{ minWidth: 190 }}><MenuItem value="ALL">Todos os sistemas</MenuItem>{systems.map(([id, name]) => <MenuItem key={id} value={id}>{name}</MenuItem>)}</TextField>
-        <TextField select size="small" label="Resultado" value={impact} onChange={(event) => setImpact(event.target.value as OperationalEvent['impact'] | 'ALL')} sx={{ minWidth: 160 }}><MenuItem value="ALL">Todos</MenuItem>{Object.entries(impactLabels).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}</TextField>
-      </Stack>
-    </Panel>
-    {loading && <Stack spacing={1.2}>{[1,2,3,4,5].map((item) => <Skeleton key={item} variant="rounded" height={105} />)}</Stack>}
-    {!loading && error && <ViewState kind="error" title="Falha ao carregar a auditoria" description={error} actionLabel="Tentar novamente" onAction={() => void load()} />}
-    {!loading && !error && events.length === 0 && <Panel><ViewState kind="empty" title="Nenhum evento encontrado" description="Ajuste os filtros para consultar outra parte da trilha operacional." /></Panel>}
-    {!loading && !error && <Stack spacing={1.1}>{events.map((event) => {
-      const color = event.impact === 'SUCCESS' ? theme.palette.success.main : event.impact === 'CRITICAL' ? theme.palette.error.main : event.impact === 'WARNING' ? theme.palette.warning.main : theme.palette.info.main;
-      return <Panel key={`${event.type}-${event.id}`} sx={{ p: { xs: 2, md: 2.2 } }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} gap={1.5} alignItems={{ md: 'center' }}>
-          <Box width={38} height={38} flex="0 0 38px" display="grid" sx={{ placeItems: 'center', borderRadius: 2, color, bgcolor: alpha(color, .1) }}><ShieldOutlinedIcon fontSize="small" /></Box>
-          <Box flex={1} minWidth={0}><Stack direction="row" gap={.7} alignItems="center" flexWrap="wrap"><Typography variant="h3">{event.title}</Typography><Chip size="small" label={event.status} variant="outlined" sx={{ color, borderColor: alpha(color, .35) }} /></Stack><Typography variant="body2" color="text.secondary" mt={.45}>{event.description || 'Evento operacional registrado sem detalhes adicionais.'}</Typography></Box>
-          <Box minWidth={{ md: 245 }}><Typography variant="body2" fontWeight={650}>{event.systemName} · {typeLabels[event.type]}</Typography><Typography variant="caption" color="text.secondary" display="block">{environmentLabels[event.environment]} · {event.source}</Typography><Typography variant="caption" color="text.secondary" display="block">{new Date(event.occurredAt).toLocaleString('pt-BR')}</Typography></Box>
-        </Stack>
-      </Panel>;
-    })}</Stack>}
+    try { const result = await eventsService.list({ page, query, systemId: systemId || undefined, severity: severity || undefined }, signal); if (!signal?.aborted) { setEvents(result.content); setPages(result.totalPages); } }
+    catch (failure) { if (!signal?.aborted) setError(getApiErrorMessage(failure)); }
+    finally { if (!signal?.aborted) setLoading(false); }
+  }, [page, query, systemId, severity]);
+  useEffect(() => { const controller = new AbortController(); const timer = window.setTimeout(() => void load(controller.signal), 250); return () => { clearTimeout(timer); controller.abort(); }; }, [load]);
+  useEffect(() => { systemsService.list().then(setSystems).catch(failure => setError(getApiErrorMessage(failure))); }, []);
+  return <Box px={{ xs: 2, sm: 3, xl: 4 }} py={3} maxWidth={1500} mx="auto">
+    <PageHeader title="Trilha de auditoria" description="Histórico persistido das verificações, incidentes e ações realmente executadas" eyebrow="Operações" />
+    <Panel sx={{ p: 2, mb: 2 }}><Stack direction={{ xs: 'column', md: 'row' }} gap={1.5}>
+      <TextField size="small" label="Buscar eventos" value={query} onChange={event => { setQuery(event.target.value); setPage(0); }} sx={{ flex: 1 }} />
+      <TextField select size="small" label="Sistema" value={systemId} onChange={event => { setSystemId(event.target.value); setPage(0); }} sx={{ minWidth: 180 }}><MenuItem value="">Todos</MenuItem>{systems.map(system => <MenuItem key={system.id} value={system.id}>{system.name}</MenuItem>)}</TextField>
+      <TextField select size="small" label="Severidade" value={severity} onChange={event => { setSeverity(event.target.value); setPage(0); }} sx={{ minWidth: 160 }}><MenuItem value="">Todas</MenuItem>{Object.entries(severityLabels).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}</TextField>
+    </Stack></Panel>
+    {loading && <Typography role="status">Carregando eventos…</Typography>}
+    {!loading && error && <ViewState kind="error" title="Não foi possível carregar os eventos" description={error} actionLabel="Tentar novamente" onAction={() => void load()} />}
+    {!loading && !error && !events.length && <Panel><ViewState kind="empty" title="Nenhum evento registrado" description="Os eventos aparecerão após cadastrar sistemas, executar verificações ou realizar ações. Se houver filtros, tente ajustá-los." /></Panel>}
+    {!loading && !error && <Stack spacing={1.5}>{events.map(event => <Panel key={event.id} sx={{ p: 2 }}>
+      <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center"><Typography variant="h3">{event.title}</Typography><Chip size="small" variant="outlined" label={severityLabels[event.severity] ?? event.severity} color={event.severity === 'CRITICAL' || event.severity === 'ERROR' ? 'error' : event.severity === 'WARNING' ? 'warning' : 'default'} /></Stack>
+      <Typography variant="body2" color="text.secondary" mt={1} sx={{ overflowWrap: 'anywhere' }}>{event.description}</Typography>
+      <Typography variant="caption" color="text.secondary" display="block" mt={1}>{event.systemName} · {event.environment ? environmentLabels[event.environment] : 'Conta pessoal'} · {event.source} · {new Date(event.occurredAt).toLocaleString('pt-BR')}</Typography>
+    </Panel>)}</Stack>}
+    {pages > 1 && <Pagination count={pages} page={page + 1} onChange={(_, value) => setPage(value - 1)} aria-label="Páginas de eventos" sx={{ mt: 2 }} />}
   </Box>;
 }

@@ -5,12 +5,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum IntegrationCatalog {
-    AI_WEB_AUDITOR("ai-web-auditor", "AI Web Auditor", "Auditoria automatizada de sites e aplicações", "HTTP · Relatórios de qualidade"),
-    ARENA_PREDICT("arena-predict", "Arena Predict", "Análise preditiva e inteligência esportiva", "HTTP"),
-    PLAYSPACE("playspace", "PlaySpace", "Gestão de espaços e reservas esportivas", "HTTP"),
-    LOGITRACK("logitrack", "LogiTrack", "Rastreamento e operações logísticas", "HTTP"),
-    HELPDESK("helpdesk", "HelpDesk", "Suporte e gestão de atendimento", "HTTP"),
-    HOSPITAL("hospital", "Gestão Hospitalar", "Operações e serviços de saúde", "HTTP");
+    AI_WEB_AUDITOR("ai-web-auditor", "AI Web Auditor", "Auditoria automatizada de sites e aplicações", "HTTP · Auditorias web"),
+    NEXUS_FLOW("nexus-flow", "Nexus Flow", "Execução de automações e workflows a partir de eventos operacionais", "HTTP · Webhook");
+
 
     private final String slug;
     private final String title;

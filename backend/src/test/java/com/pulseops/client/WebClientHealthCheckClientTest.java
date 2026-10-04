@@ -143,7 +143,8 @@ class WebClientHealthCheckClientTest {
         when(exchangeFunction.exchange(any(ClientRequest.class)))
                 .thenReturn(Mono.error(new IllegalStateException("Request timed out waiting for response")));
 
-        HealthProbeResult result = client.probe(system("https://slow.example.com", "/health", 5000));
+        // This test exercises message classification, not the timer (covered separately above).
+        HealthProbeResult result = client.probe(system("https://slow.example.com", "/health", 60_000));
 
         assertThat(result.failureType()).isEqualTo(ProbeFailureType.TIMEOUT);
         assertThat(result.errorMessage()).containsIgnoringCase("timed out");

@@ -1,0 +1,25 @@
+{
+  "check": {
+    "httpStatus": 200,
+    "success": true,
+    "responseTimeMs": 1019,
+    "checkedAt": "2026-10-03T22:31:18.226989284Z"
+  },
+  "profilePersisted": true,
+  "logoutProtected": true,
+  "routes": [
+    "/",
+    "/sistemas",
+    "/incidentes",
+    "/deploys",
+    "/qualidade",
+    "/integracoes",
+    "/alertas",
+    "/relatorios",
+    "/auditoria",
+    "/perfil",
+    "/configuracoes"
+  ],
+  "errors": [],
+  "network": []
+}

@@ -37,7 +37,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
-@Profile("dev")
+@Profile("demo & !prod")
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "pulseops.demo.seed-enabled", havingValue = "true")
 public class DevelopmentDataSeeder implements ApplicationRunner {
 
     private static final Set<String> DEMO_SYSTEM_NAMES = Set.of(

@@ -15,6 +15,7 @@ public record OperationalEventResponse(
         String description,
         String status,
         OperationalEventImpact impact,
-        String source
+        String source,
+        UUID resourceId
 ) {
 }

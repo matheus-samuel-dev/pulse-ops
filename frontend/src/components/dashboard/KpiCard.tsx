@@ -8,7 +8,7 @@ import { Panel } from '../common/Panel';
 interface KpiCardProps {
   label: string;
   value: string;
-  change?: number;
+  change?: number | null;
   icon: ComponentType<SvgIconProps>;
   color: string;
   inverseChange?: boolean;
@@ -72,7 +72,7 @@ export function KpiCard({ label, value, change, icon: Icon, color, inverseChange
           >
             <TrendIcon sx={{ fontSize: 14 }} />
             <Typography fontSize="0.7rem" fontWeight={650}>
-              {Math.abs(change).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
+              {Math.abs(change ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
             </Typography>
           </Stack>
         )}

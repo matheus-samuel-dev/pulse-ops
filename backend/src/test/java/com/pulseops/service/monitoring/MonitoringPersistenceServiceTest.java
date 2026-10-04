@@ -105,7 +105,7 @@ class MonitoringPersistenceServiceTest {
     }
 
     @Test
-    void shouldPreserveProbeErrorDetailsInFailedHealthCheck() {
+    void shouldPersistSanitizedFailureReason() {
         UUID systemId = UUID.randomUUID();
         MonitoredSystem target = activeSystem(systemId);
         MonitoredSystem lockedSystem = activeSystem(systemId);
@@ -119,7 +119,7 @@ class MonitoringPersistenceServiceTest {
 
         assertThat(result.getHttpStatus()).isNull();
         assertThat(result.getResponseTimeMs()).isEqualTo(5_000);
-        assertThat(result.getErrorMessage()).isEqualTo("Health check timed out: Read timed out");
+        assertThat(result.getErrorMessage()).isEqualTo(decision.reason());
         assertThat(lockedSystem.getStatus()).isEqualTo(SystemStatus.DOWN);
     }
 
@@ -148,7 +148,7 @@ class MonitoringPersistenceServiceTest {
 
         assertThatThrownBy(() -> persistenceService.record(target, HealthProbeResult.response(200, 50)))
                 .isInstanceOf(BusinessRuleException.class)
-                .hasMessage("Inactive systems cannot be monitored");
+                .hasMessage("Sistemas inativos não podem ser monitorados");
 
         verifyNoInteractions(healthCheckRepository, statusEvaluator, incidentAutomationService);
         verify(systemRepository, never()).save(any());
@@ -171,10 +171,10 @@ class MonitoringPersistenceServiceTest {
     void shouldRejectMissingProbeInputsBeforeUsingRepositories() {
         assertThatNullPointerException()
                 .isThrownBy(() -> persistenceService.record(null, HealthProbeResult.response(200, 50)))
-                .withMessage("probe target is required");
+                .withMessage("probe target é obrigatório");
         assertThatNullPointerException()
                 .isThrownBy(() -> persistenceService.record(activeSystem(UUID.randomUUID()), null))
-                .withMessage("probe result is required");
+                .withMessage("probe result é obrigatório");
 
         verifyNoInteractions(systemRepository, healthCheckRepository, statusEvaluator, incidentAutomationService);
     }

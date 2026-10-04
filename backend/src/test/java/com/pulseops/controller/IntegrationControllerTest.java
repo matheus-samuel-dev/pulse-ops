@@ -58,7 +58,7 @@ class IntegrationControllerTest {
     @ParameterizedTest @ValueSource(strings = {"ADMIN", "DEVELOPER"})
     void writersReceiveNormalizedOfflineResultWithoutServerError(String role) throws Exception {
         var time = OffsetDateTime.now();
-        when(checks.check("ai-web-auditor")).thenReturn(new IntegrationCheckResponse("ai-web-auditor", "OFFLINE", 5000, time, "Falha de comunicação", false, time.plusMinutes(1)));
+        when(checks.check("ai-web-auditor")).thenReturn(new IntegrationCheckResponse("ai-web-auditor", "OFFLINE", 5000L, time, "Falha de comunicação", false, time.plusMinutes(1)));
         mvc.perform(post("/api/integrations/ai-web-auditor/health-check").with(user("writer").roles(role)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("OFFLINE"))
                 .andExpect(jsonPath("$.responseTimeMs").value(5000));

@@ -17,12 +17,16 @@ const AuditPage = lazy(() => import('./pages/AuditPage').then((module) => ({ def
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
 const IntegrationsPage = lazy(() => import('./pages/IntegrationsPage').then((module) => ({ default: module.IntegrationsPage })));
 
+const RegisterPage = lazy(() => import('./pages/RegisterPage').then(module => ({ default: module.RegisterPage })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then(module => ({ default: module.ProfilePage })));
+
 export function App() {
   return (
     <Suspense fallback={<Box minHeight="100vh" display="grid" sx={{ placeItems: 'center' }}><CircularProgress aria-label="Carregando página" /></Box>}>
       <ScrollToTop />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/cadastro" element={<RegisterPage />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
             <Route index element={<DashboardPage />} />
@@ -36,6 +40,7 @@ export function App() {
             <Route path="alertas" element={<AlertsPage />} />
             <Route path="relatorios" element={<ReportsPage />} />
             <Route path="auditoria" element={<AuditPage />} />
+            <Route path="perfil" element={<ProfilePage />} />
             <Route path="configuracoes" element={<SettingsPage />} />
           </Route>
         </Route>

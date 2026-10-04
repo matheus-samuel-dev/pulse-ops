@@ -81,9 +81,9 @@ class IncidentAutomationServiceTest {
                 eq(IncidentAutomationService.AUTOMATIC_INCIDENT_TITLE),
                 descriptionCaptor.capture(),
                 severityCaptor.capture(),
-                eq(NOW_OFFSET)
+                eq(NOW_OFFSET.minusMinutes(2))
         );
-        assertThat(descriptionCaptor.getValue()).contains("3 consecutive", "PlaySpace", "timed out");
+        assertThat(descriptionCaptor.getValue()).contains("3 verificações consecutivas", "PlaySpace", "timed out");
         assertThat(severityCaptor.getValue()).isEqualTo(IncidentSeverity.HIGH);
     }
 
@@ -226,7 +226,7 @@ class IncidentAutomationServiceTest {
                 () -> automationService.evaluate(null, failedCheck(NOW_OFFSET),
                         new MonitoringDecision(SystemStatus.DOWN, false, "Down"), List.of())
         );
-        assertThat(exception).hasMessage("system is required");
+        assertThat(exception).hasMessage("system é obrigatório");
     }
 
     private List<Incident> activeIncidents(MonitoredSystem system) {

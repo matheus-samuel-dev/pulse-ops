@@ -2,7 +2,7 @@ import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
 import ReportProblemRoundedIcon from '@mui/icons-material/ReportProblemRounded';
-import ScienceRoundedIcon from '@mui/icons-material/ScienceRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Alert,
   Box,
@@ -20,7 +20,7 @@ import { DashboardSkeleton } from '../components/dashboard/DashboardSkeleton';
 import { ErrorDonut } from '../components/dashboard/ErrorDonut';
 import { KpiCard } from '../components/dashboard/KpiCard';
 import { LatencyChart } from '../components/dashboard/LatencyChart';
-import { QualitySpotlight } from '../components/dashboard/QualitySpotlight';
+import { useNavigate } from 'react-router-dom';
 import { SystemHealthTable } from '../components/dashboard/SystemHealthTable';
 import { ViewState } from '../components/common/ViewState';
 import { formatPercent } from '../components/dashboard/dashboardFormatters';
@@ -42,12 +42,13 @@ const periodOptions: Array<{ value: DashboardPeriod; label: string }> = [
 const environmentOptions: Array<{ value: EnvironmentFilter; label: string }> = [
   { value: 'ALL', label: 'Todos os ambientes' },
   { value: 'PRODUCTION', label: 'Produção' },
-  { value: 'STAGING', label: 'Staging' },
+  { value: 'STAGING', label: 'Homologação' },
   { value: 'DEVELOPMENT', label: 'Desenvolvimento' },
 ];
 
 export function DashboardPage() {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<DashboardFilters>({ period: '24h', environment: 'ALL' });
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,7 +84,7 @@ export function DashboardPage() {
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" gap={2.5} mb={3}>
         <Box>
           <Stack direction="row" spacing={1} alignItems="center">
-            <Typography variant="h1">Dashboard</Typography>
+            <Typography variant="h1">Visão geral</Typography>
             {data && (
               <Box
                 component="span"
@@ -98,7 +99,7 @@ export function DashboardPage() {
                   letterSpacing: '.035em',
                 }}
               >
-                {data.summary.overallHealth === 'HEALTHY' ? 'PLATAFORMA SAUDÁVEL' : 'REQUER ATENÇÃO'}
+                {data.summary.overallHealth === 'UNKNOWN' ? 'AGUARDANDO VERIFICAÇÕES' : data.summary.overallHealth === 'HEALTHY' ? 'SISTEMAS OPERACIONAIS' : 'REQUER ATENÇÃO'}
               </Box>
             )}
           </Stack>
@@ -151,7 +152,7 @@ export function DashboardPage() {
       {!loading && error && !data && (
         <ViewState
           kind="error"
-          title="Não foi possível carregar o dashboard"
+          title="Não foi possível carregar o painel"
           description={error}
           actionLabel="Tentar novamente"
           onAction={() => void load()}
@@ -161,14 +162,15 @@ export function DashboardPage() {
       {!loading && data && (
         <Stack spacing={2}>
           {error && <Alert severity="warning">Dados anteriores preservados. {error}</Alert>}
+          {data.summary.monitoredSystems === 0 && <ViewState kind="empty" title="Cadastre seu primeiro sistema" description="Nenhum sistema está sendo monitorado neste ambiente. Cadastre uma aplicação para executar a primeira verificação e gerar histórico real." actionLabel="Cadastrar sistema" onAction={() => navigate('/sistemas?novo=1')} />}
           <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }} gap={2}>
             <KpiCard
-              label="Sistemas monitorados"
+              label="Sistemas cadastrados"
               value={data.summary.monitoredSystems.toLocaleString('pt-BR')}
               icon={DnsRoundedIcon}
               color={theme.palette.primary.main}
               note={`${data.summary.operationalSystems} operacionais`}
-              help="Sistemas ativos incluídos nos health checks e agregações do período."
+              help="Cadastros do escopo selecionado; sistemas pausados preservam seu histórico."
             />
             <KpiCard
               label="Disponibilidade média"
@@ -176,21 +178,19 @@ export function DashboardPage() {
               change={data.summary.availabilityChange}
               icon={AssessmentRoundedIcon}
               color={theme.palette.success.main}
-              help="Média percentual dos health checks bem-sucedidos entre os sistemas monitorados."
+              help="Média das disponibilidades por sistema, com no mínimo cinco verificações válidas na janela."
             />
             <KpiCard
-              label="Cobertura de testes"
-              value={formatPercent(data.summary.averageCoverage)}
-              change={data.summary.coverageChange}
-              icon={ScienceRoundedIcon}
-              color={theme.palette.secondary.main}
-              help="Média do score de cobertura mais recente de cada sistema com relatório."
+              label="Sistemas com problemas"
+              value={String(data.summary.problemSystems)}
+              icon={WarningAmberRoundedIcon}
+              color={theme.palette.warning.main}
+              note={`${data.summary.degradedSystems} degradados · ${data.summary.downSystems} indisponíveis · ${data.summary.configurationRequiredSystems} com configuração inválida`}
+              help="Sistemas cuja última condição registrada exige atenção."
             />
             <KpiCard
-              label="Incidentes abertos"
+              label="Incidentes ativos na janela"
               value={data.summary.openIncidents.toLocaleString('pt-BR')}
-              change={data.summary.incidentChange}
-              inverseChange
               icon={ReportProblemRoundedIcon}
               color={theme.palette.error.main}
               help="Incidentes nos estados Aberto ou Investigando; queda é uma tendência favorável."
@@ -202,7 +202,7 @@ export function DashboardPage() {
             <ErrorDonut data={data.errors} />
           </Box>
           <SystemHealthTable systems={data.health} />
-          <QualitySpotlight coverage={data.summary.averageCoverage} />
+
         </Stack>
       )}
     </Box>

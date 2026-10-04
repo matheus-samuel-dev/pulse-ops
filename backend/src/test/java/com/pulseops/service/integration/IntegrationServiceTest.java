@@ -1,149 +1,42 @@
 package com.pulseops.service.integration;
-
 import com.pulseops.config.IntegrationProperties;
-import com.pulseops.domain.monitoring.HealthCheck;
-import com.pulseops.domain.quality.TestReport;
-import com.pulseops.domain.system.MonitoredSystem;
-import com.pulseops.dto.integration.IntegrationResponse;
-import com.pulseops.exception.ResourceNotFoundException;
-import com.pulseops.repository.HealthCheckRepository;
-import com.pulseops.repository.MonitoredSystemRepository;
-import com.pulseops.repository.TestReportRepository;
-import com.pulseops.security.DemoModeProperties;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import com.pulseops.domain.integration.*;
+import com.pulseops.repository.*;
+import com.pulseops.security.*;
+import java.time.*;
+import java.util.*;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.params.provider.*;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
-@ExtendWith(MockitoExtension.class)
 class IntegrationServiceTest {
-    static final Clock CLOCK = Clock.fixed(Instant.parse("2026-09-10T14:00:00Z"), ZoneOffset.UTC);
-    static final OffsetDateTime NOW = OffsetDateTime.now(CLOCK);
-    @Mock MonitoredSystemRepository systems;
-    @Mock HealthCheckRepository checks;
-    @Mock TestReportRepository reports;
-    IntegrationService service;
-
-    static IntegrationProperties properties(Map<String, IntegrationProperties.Binding> bindings) {
-        return new IntegrationProperties(Duration.ofMinutes(5), Duration.ofMinutes(1), ZoneId.of("America/Sao_Paulo"), bindings);
-    }
-
-    @BeforeEach void setup() { service = new IntegrationService(systems, checks, reports, properties(Map.of()), new DemoModeProperties(false), CLOCK); }
-
-    @Test void unconfiguredCatalogHasNoFabricatedMetricsAndDoesNotProbe() {
-        var result = service.overview();
-        assertThat(result.integrations()).hasSize(6).allSatisfy(item -> {
-            assertThat(item.configured()).isFalse();
-            assertThat(item.status()).isEqualTo("UNKNOWN");
-            assertThat(item.healthPercent()).isNull();
-            assertThat(item.lastCheckedAt()).isNull();
-        });
-        assertThat(result.summary().connected()).isZero();
-        assertThat(result.summary().eventsToday()).isZero();
-        verifyNoInteractions(checks, reports);
-    }
-
-    @Test void derivesHealthAndReceiptTimeFromPersistedDataAndMasksSensitiveConfiguration() {
-        MonitoredSystem system = system();
-        when(systems.findByNameIgnoreCase("AI Web Auditor")).thenReturn(Optional.of(system));
-        HealthCheck check = check(system, true, NOW.minusSeconds(20));
-        when(checks.findFirstByMonitoredSystemIdOrderByCheckedAtDesc(system.getId())).thenReturn(Optional.of(check));
-        when(checks.countByMonitoredSystemIdAndCheckedAtBetween(system.getId(), NOW.minusDays(1), NOW)).thenReturn(10L);
-        when(checks.countByMonitoredSystemIdAndSuccessTrueAndCheckedAtBetween(system.getId(), NOW.minusDays(1), NOW)).thenReturn(9L);
-        TestReport report = new TestReport();
-        report.setGeneratedAt(NOW.minusDays(1));
-        ReflectionTestUtils.setField(report, "createdAt", NOW.minusMinutes(2));
-        when(reports.findFirstByMonitoredSystemIdOrderByCreatedAtDesc(system.getId())).thenReturn(Optional.of(report));
-        var result = service.detail("ai-web-auditor");
-        assertThat(result.healthPercent()).isEqualByComparingTo("90.0");
-        assertThat(result.errorsLast24h()).isEqualTo(1);
-        assertThat(result.lastSuccessfulSyncAt()).isEqualTo(NOW.minusMinutes(2));
-        assertThat(result.lastReportAt()).isEqualTo(NOW.minusDays(1));
-        assertThat(result.status()).isEqualTo("ONLINE");
-        assertThat(result.baseUrl()).doesNotContain("internal", "secret");
-        assertThat(result.healthEndpoint()).doesNotContain("secret");
-    }
-
-    @Test void summariesUseLocalDayAndCountAllEventsIndependentlyOfTheFeedLimit() {
-        MonitoredSystem system = system();
-        when(systems.findByNameIgnoreCase("AI Web Auditor")).thenReturn(Optional.of(system));
-        OffsetDateTime start = OffsetDateTime.parse("2026-09-10T00:00:00-03:00");
-        when(checks.countByMonitoredSystemIdInAndCheckedAtGreaterThanEqualAndCheckedAtLessThan(List.of(system.getId()), start, NOW)).thenReturn(1450L);
-        when(reports.countByMonitoredSystemIdInAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(List.of(system.getId()), start, NOW)).thenReturn(20L);
-        var result = service.overview();
-        assertThat(result.summary().connected()).isEqualTo(1);
-        assertThat(result.summary().eventsToday()).isEqualTo(1470);
-        assertThat(result.summary().operational()).isZero();
-        assertThat(result.summary().withIncidents()).isZero();
-        assertThat(result.reportingTimezone()).isEqualTo("America/Sao_Paulo");
-    }
-
-    @Test void usesExplicitIdAndNeverFallsBackWhenTheBoundSystemIsMissing() {
-        UUID id = UUID.randomUUID();
-        service = new IntegrationService(systems, checks, reports, properties(Map.of("ai-web-auditor", new IntegrationProperties.Binding(id, "https://auditor.example.com/app"))), new DemoModeProperties(true), CLOCK);
-        IntegrationResponse result = service.detail("ai-web-auditor");
-        assertThat(result.configured()).isFalse();
-        assertThat(result.publicUrl()).isEqualTo("https://auditor.example.com");
-        verify(systems).findById(id);
-        verify(systems, never()).findByNameIgnoreCase(anyString());
-        assertThat(service.overview().readOnly()).isTrue();
-    }
-
-    @Test void findsConfiguredIdsWithoutDuplicates() {
-        var system = system();
-        when(systems.findByNameIgnoreCase("AI Web Auditor")).thenReturn(Optional.of(system));
-        assertThat(service.systemIds()).containsExactly(system.getId());
-    }
-
-    @Test void returnsUnknownForStaleDataAndNoHealthForFewerThanFiveChecks() {
-        var system = system();
-        when(systems.findByNameIgnoreCase("AI Web Auditor")).thenReturn(Optional.of(system));
-        when(checks.findFirstByMonitoredSystemIdOrderByCheckedAtDesc(system.getId())).thenReturn(Optional.of(check(system, true, NOW.minusMinutes(5))));
-        when(checks.countByMonitoredSystemIdAndCheckedAtBetween(any(), any(), any())).thenReturn(4L);
-        var result = service.detail("ai-web-auditor");
-        assertThat(result.status()).isEqualTo("UNKNOWN");
-        assertThat(result.statusReason()).contains("desatualizada");
-        assertThat(result.healthPercent()).isNull();
-        assertThat(result.lastSuccessfulSyncAt()).isNull();
-    }
-
-    @Test void unknownCatalogEntryIsNotFound() { assertThatThrownBy(() -> service.detail("arbitrary")).isInstanceOf(ResourceNotFoundException.class); }
-
-    @ParameterizedTest @NullAndEmptySource
-    @ValueSource(strings = {"javascript:alert(1)", "https://user:password@example.com", "https://example.com?key=secret", "https://example.com#secret", "http://", "http://example.com:0", "http://example.com:99999", "not a url"})
-    void rejectsUnsafePublicLinks(String value) { assertThat(IntegrationService.publicOrigin(value)).isNull(); }
-
-    @Test void validatesCooldownAndFreshnessConfiguration() {
-        assertThatThrownBy(() -> new IntegrationProperties(Duration.ZERO, Duration.ofMinutes(1), ZoneOffset.UTC, null)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new IntegrationProperties(Duration.ofMinutes(1), Duration.ofSeconds(29), ZoneOffset.UTC, null)).isInstanceOf(IllegalArgumentException.class);
-        assertThat(properties(null).systems()).isEmpty();
-    }
-
-    static MonitoredSystem system() {
-        var system = new MonitoredSystem(); system.setId(UUID.randomUUID()); system.setName("AI Web Auditor");
-        system.setBaseUrl("https://internal.example.com"); system.setHealthEndpoint("/health?key=secret");
-        system.setActive(true); system.setLatencyThresholdMs(500); return system;
-    }
-    static HealthCheck check(MonitoredSystem system, boolean success, OffsetDateTime time) {
-        var check = new HealthCheck(); check.setId(UUID.randomUUID()); check.setMonitoredSystem(system); check.setCheckedAt(time);
-        check.setSuccess(success); check.setHttpStatus(success ? 200 : 503); check.setResponseTimeMs(120); return check;
-    }
+ static final Clock CLOCK=Clock.fixed(Instant.parse("2026-09-10T14:00:00Z"),ZoneOffset.UTC);
+ static final OffsetDateTime NOW=OffsetDateTime.now(CLOCK);
+ static final UUID OWNER=UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+ static com.pulseops.domain.system.MonitoredSystem system(){var s=new com.pulseops.domain.system.MonitoredSystem();s.setId(UUID.randomUUID());s.setBaseUrl("https://example.org");s.setActive(true);return s;}
+ static IntegrationProperties properties(Map<String,IntegrationProperties.Binding> ignored){return new IntegrationProperties(Duration.ofMinutes(5),Duration.ofMinutes(1),ZoneOffset.UTC,Map.of());}
+ final IntegrationConnectionRepository connections=mock(IntegrationConnectionRepository.class);
+ final IntegrationProbeRepository probes=mock(IntegrationProbeRepository.class);
+ final IntegrationRunRepository runs=mock(IntegrationRunRepository.class);
+ final OperationalEventRepository events=mock(OperationalEventRepository.class);
+ final IntegrationService service=new IntegrationService(connections,probes,runs,events,properties(Map.of()),new DemoModeProperties(false),CLOCK);
+ @BeforeEach void owner(){SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(new PulseOpsPrincipal(OWNER,"Operator","operator@test.org","","DEVELOPER"),null));}
+ @AfterEach void clear(){SecurityContextHolder.clearContext();}
+ IntegrationConnection config(){var c=new IntegrationConnection();ReflectionTestUtils.setField(c,"id",UUID.randomUUID());c.setOwnerId(OWNER);c.setSlug("ai-web-auditor");c.setBaseUrl("https://auditor.example.org");c.setHealthEndpoint("/health");when(connections.findByOwnerIdAndSlug(OWNER,c.getSlug())).thenReturn(Optional.of(c));return c;}
+ IntegrationProbe probe(IntegrationConnection c,boolean success,OffsetDateTime checkedAt){var p=new IntegrationProbe();p.setConnectionId(c.getId());p.setOwnerId(OWNER);p.setSlug(c.getSlug());p.setCheckedAt(checkedAt);p.setSuccess(success);p.setResponseTimeMs(176L);p.setMessage(success?"HTTP 200":"HTTP 503");when(probes.findFirstByConnectionIdOrderByCheckedAtDescIdDesc(c.getId())).thenReturn(Optional.of(p));return p;}
+ @Test void onlySpecializedConnectorsAreOffered(){var r=service.overview();assertThat(r.integrations()).extracting(x->x.id()).containsExactly("ai-web-auditor","nexus-flow");assertThat(r.integrations()).allSatisfy(x->{assertThat(x.configured()).isFalse();assertThat(x.systemId()).isNull();assertThat(x.status()).isEqualTo("NOT_CONFIGURED");assertThat(x.healthPercent()).isNull();});assertThat(r.summary().connected()).isZero();}
+ @Test void configuredConnectorNeedsOwnProbe(){config();assertThat(service.detail("ai-web-auditor").status()).isEqualTo("UNKNOWN");}
+ @Test void recentOwnProbeShowsRealState(){var c=config();var p=probe(c,true,NOW.minusSeconds(20));when(probes.findByConnectionIdAndCheckedAtBetweenOrderByCheckedAtDesc(c.getId(),NOW.minusDays(1),NOW)).thenReturn(List.of(p));var r=service.detail(c.getSlug());assertThat(r.status()).isEqualTo("ONLINE");assertThat(r.responseTimeMs()).isEqualTo(176);assertThat(r.lastSuccessfulSyncAt()).isEqualTo(p.getCheckedAt());assertThat(r.checksLast24h()).isEqualTo(1);assertThat(r.healthPercent()).isNull();assertThat(r.systemId()).isNull();}
+ @Test void failedProbeDoesNotInventLastSuccessfulCommunication(){var c=config();probe(c,false,NOW.minusSeconds(20));var r=service.detail(c.getSlug());assertThat(r.status()).isEqualTo("OFFLINE");assertThat(r.lastSuccessfulSyncAt()).isNull();assertThat(r.lastFailureAt()).isEqualTo(NOW.minusSeconds(20));}
+ @ParameterizedTest @ValueSource(ints={-600,60}) void staleAndFutureEvidenceIsUnknown(int seconds){var c=config();probe(c,true,NOW.plusSeconds(seconds));assertThat(service.detail(c.getSlug()).status()).isEqualTo("UNKNOWN");}
+ @Test void configurationEditInvalidatesEarlierProbe(){var c=config();ReflectionTestUtils.setField(c,"updatedAt",NOW.minusSeconds(5));probe(c,true,NOW.minusSeconds(10));assertThat(service.detail(c.getSlug()).status()).isEqualTo("UNKNOWN");}
+ @Test void fiveOwnProbesCalculateConnectorAvailability(){var c=config();var p=probe(c,true,NOW.minusSeconds(20));when(probes.findByConnectionIdAndCheckedAtBetweenOrderByCheckedAtDesc(c.getId(),NOW.minusDays(1),NOW)).thenReturn(Collections.nCopies(5,p));assertThat(service.detail(c.getSlug()).healthPercent()).isEqualByComparingTo("100");}
+ @Test void actualRunUpdatesCommunicationAndReportTimes(){var c=config();var run=new IntegrationRun();ReflectionTestUtils.setField(run,"updatedAt",NOW.minusSeconds(10));when(runs.findFirstByOwnerIdAndSlugAndHttpStatusBetweenOrderByUpdatedAtDesc(OWNER,c.getSlug(),200,299)).thenReturn(Optional.of(run));when(runs.findFirstByOwnerIdAndSlugAndStateOrderByUpdatedAtDesc(OWNER,c.getSlug(),"COMPLETED")).thenReturn(Optional.of(run));assertThat(service.detail(c.getSlug()).lastSuccessfulSyncAt()).isEqualTo(run.getUpdatedAt());assertThat(service.detail(c.getSlug()).lastReportAt()).isEqualTo(run.getUpdatedAt());}
+ @Test void unknownCatalogRejectsBusinessApplications(){assertThatThrownBy(()->service.detail("arena-predict")).isInstanceOf(com.pulseops.exception.ResourceNotFoundException.class);}
+ @ParameterizedTest @NullAndEmptySource @ValueSource(strings={"bad", "file:///etc/passwd", "https://user:secret@example.org", "https://example.org?secret=foo", "https://example.org#fragment", "https://example.org:0", "https://example.org:65536"}) void invalidPublicOriginsAreNotExposed(String value){assertThat(IntegrationService.publicOrigin(value)).isNull();}
+ @Test void publicOriginStripsPaths(){assertThat(IntegrationService.publicOrigin("https://example.org/path")).isEqualTo("https://example.org");}
 }

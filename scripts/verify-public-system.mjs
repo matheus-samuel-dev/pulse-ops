@@ -1,0 +1,48 @@
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+const require = createRequire(new URL('../frontend/package.json', import.meta.url));
+const { chromium } = require('@playwright/test');
+const email = process.env.PULSEOPS_REVIEW_EMAIL;
+const password = process.env.PULSEOPS_REVIEW_PASSWORD;
+if (!email || !password) throw new Error('Configure PULSEOPS_REVIEW_EMAIL and PULSEOPS_REVIEW_PASSWORD for an existing review account');
+const origin = process.env.PULSEOPS_REVIEW_ORIGIN ?? 'http://localhost:3000';
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+const errors = [], badRequests = [];
+page.on('pageerror', error => errors.push(error.message));
+page.on('console', message => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
+page.on('response', response => { if (response.status() >= 400) badRequests.push({ status: response.status(), url: response.url() }); });
+try {
+  await page.goto(`${origin}/login`);
+  await page.getByLabel('E-mail', { exact: true }).fill(email);
+  await page.getByLabel('Senha', { exact: true }).fill(password);
+  await page.getByRole('button', { name: 'Entrar no PulseOps' }).click();
+  await page.getByRole('heading', { name: 'Visão geral', exact: true }).waitFor();
+  const session = await page.evaluate(() => JSON.parse(sessionStorage.getItem('pulseops.session') ?? localStorage.getItem('pulseops.session')));
+  const get = async path => {
+    const response = await fetch(`${origin}/api${path}`, { headers: { Authorization: `Bearer ${session.token}` } });
+    if (!response.ok) throw new Error(`Verification query failed: HTTP ${response.status()}`);
+    return response.json();
+  };
+  const systems = await get('/systems');
+  const system = systems.find(item => item.name === 'Portfólio público');
+  if (!system) throw new Error('Register the public review target before running this verification');
+  await page.goto(`${origin}/sistemas/${system.id}`);
+  await page.getByRole('heading', { name: system.name, exact: true }).waitFor();
+  const checked = page.waitForResponse(response => response.url().endsWith('/checks') && response.request().method() === 'POST', { timeout: 75000 });
+  await page.getByRole('button', { name: 'Verificar agora' }).click();
+  const response = await checked;
+  if (response.status() !== 201) throw new Error(`Monitoring request failed: HTTP ${response.status()}`);
+  const check = await response.json();
+  await page.waitForLoadState('networkidle');
+  const detail = await get(`/systems/${system.id}`);
+  const history = await get(`/systems/${system.id}/checks?period=24h`);
+  const metrics = await get(`/systems/${system.id}/metrics?period=24h`);
+  const dashboard = await get('/dashboard?period=24h');
+  const report = await get(`/reports/operational?period=24h&systemId=${system.id}`);
+  const evidence = { url: detail.baseUrl + detail.healthEndpoint, check, latestCheck: detail.lastCheck, status: detail.status, historyCount: history.totalElements, metrics, dashboardHealth: dashboard.health.find(item => item.id === system.id || item.systemId === system.id), reportKpis: report.kpis, errors, badRequests };
+  fs.writeFileSync('docs/evidence/consistency/public-monitoring.json', JSON.stringify(evidence, null, 2));
+  await page.screenshot({ path: 'docs/evidence/consistency/public-monitoring.png', fullPage: true });
+  if (errors.length || badRequests.length) throw new Error('Browser reported errors; inspect public-monitoring.json');
+  console.log(JSON.stringify({ httpStatus: check.httpStatus, durationMs: check.responseTimeMs, status: detail.status, persistedCheckId: check.id, totalChecks: history.totalElements, consoleErrors: errors.length, badRequests: badRequests.length }));
+} finally { await browser.close(); }

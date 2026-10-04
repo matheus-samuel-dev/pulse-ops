@@ -26,6 +26,10 @@ import java.time.OffsetDateTime;
         }
 )
 public class Incident extends AuditableEntity {
+    @Column(name = "investigating_at")
+    private OffsetDateTime investigatingAt;
+    public OffsetDateTime getInvestigatingAt() { return investigatingAt; }
+    public void setInvestigatingAt(OffsetDateTime value) { investigatingAt = value; }
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

@@ -11,11 +11,12 @@ public record HealthCheckResponse(
         Integer httpStatus,
         long responseTimeMs,
         boolean success,
-        String errorMessage
+        String errorMessage,
+        String failureType
 ) {
     public static HealthCheckResponse from(HealthCheck check) {
         return new HealthCheckResponse(
                 check.getId(), check.getMonitoredSystem().getId(), check.getCheckedAt(), check.getHttpStatus(),
-                check.getResponseTimeMs(), check.isSuccess(), check.getErrorMessage());
+                check.getResponseTimeMs(), check.isSuccess(), check.getErrorMessage(),check.getFailureType());
     }
 }

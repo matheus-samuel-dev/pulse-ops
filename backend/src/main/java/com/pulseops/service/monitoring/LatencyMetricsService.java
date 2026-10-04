@@ -62,7 +62,7 @@ public class LatencyMetricsService {
 
     public LatencyMetrics calculateFromChecks(List<HealthCheck> checks, TimeRange period) {
         Objects.requireNonNull(checks, "checks are required");
-        Objects.requireNonNull(period, "period is required");
+        Objects.requireNonNull(period, "period é obrigatório");
 
         List<Long> samples = checks.stream()
                 .filter(Objects::nonNull)
@@ -75,7 +75,7 @@ public class LatencyMetricsService {
                 .toList();
 
         if (samples.isEmpty()) {
-            return new LatencyMetrics(period, 0, BigDecimal.ZERO.setScale(2), null, null, null);
+            return new LatencyMetrics(period, 0, null, null, null, null);
         }
 
         long sum = samples.stream().mapToLong(Long::longValue).sum();

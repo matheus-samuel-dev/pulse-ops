@@ -46,6 +46,7 @@ public class DashboardService {
     private final DeploymentRepository deploymentRepository;
     private final TestReportRepository testReportRepository;
     private final Clock clock;
+    private final OperationalReadModel readModel;
 
     public DashboardService(
             MonitoredSystemRepository systemRepository,
@@ -61,8 +62,15 @@ public class DashboardService {
         this.deploymentRepository = deploymentRepository;
         this.testReportRepository = testReportRepository;
         this.clock = clock;
+        this.readModel=new OperationalReadModel(systemRepository,healthCheckRepository,incidentRepository,deploymentRepository,testReportRepository,clock);
     }
 
+    @Transactional(readOnly=true,isolation=org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+    public com.pulseops.dto.dashboard.DashboardDataResponse snapshot(String period,Environment environment) {
+        Clock snapshotClock=Clock.fixed(clock.instant(),clock.getZone());
+        DashboardService stable=new DashboardService(systemRepository,healthCheckRepository,incidentRepository,deploymentRepository,testReportRepository,snapshotClock);
+        return new com.pulseops.dto.dashboard.DashboardDataResponse(stable.summary(period,environment),stable.latency(period,environment),stable.errors(period,environment),stable.health(period,environment),OffsetDateTime.now(snapshotClock));
+    }
     @Transactional(readOnly = true)
     public DashboardSummaryResponse summary(String periodValue) {
         return summary(periodValue, null);
@@ -73,45 +81,27 @@ public class DashboardService {
         TimeRange period = period(periodValue);
         Duration duration = Duration.between(period.start(), period.end());
         TimeRange previous = new TimeRange(period.start().minus(duration), period.start());
-        List<MonitoredSystem> systems = systemRepository.findAll().stream()
-                .filter(MonitoredSystem::isActive)
-                .filter(system -> environment == null || system.getEnvironment() == environment)
-                .toList();
-        List<HealthCheck> currentChecks = checks(period, environment);
-        List<HealthCheck> previousChecks = checks(previous, environment);
-        List<Incident> incidents = incidentRepository.findAll().stream()
-                .filter(incident -> incident.getMonitoredSystem().isActive())
-                .filter(incident -> environment == null || incident.getMonitoredSystem().getEnvironment() == environment)
-                .toList();
-        List<Deployment> deployments = deploymentRepository.findAll().stream()
-                .filter(deployment -> deployment.getMonitoredSystem().isActive())
-                .filter(deployment -> environment == null || deployment.getMonitoredSystem().getEnvironment() == environment)
-                .toList();
-        List<TestReport> reports = testReportRepository.findAll().stream()
-                .filter(report -> report.getMonitoredSystem().isActive())
-                .filter(report -> environment == null || report.getMonitoredSystem().getEnvironment() == environment)
-                .toList();
-
-        BigDecimal availability = aggregateAvailability(systems, currentChecks);
-        BigDecimal previousAvailability = aggregateAvailability(systems, previousChecks);
-        BigDecimal coverage = averageLatestCoverage(reports, period.end());
-        BigDecimal previousCoverage = averageLatestCoverage(reports, period.start());
-        long activeIncidents = incidents.stream()
-                .filter(item -> item.getStatus() == IncidentStatus.OPEN || item.getStatus() == IncidentStatus.INVESTIGATING)
-                .count();
-        long currentIncidents = incidents.stream().filter(item -> inside(item.getStartedAt(), period)).count();
-        long previousIncidents = incidents.stream().filter(item -> inside(item.getStartedAt(), previous)).count();
-        long currentDeployments = deployments.stream().filter(item -> inside(item.getDeployedAt(), period)).count();
-        int operational = (int) systems.stream().filter(item -> item.getStatus() == SystemStatus.OPERATIONAL).count();
-        int degraded = (int) systems.stream().filter(item -> item.getStatus() == SystemStatus.DEGRADED).count();
-        int down = (int) systems.stream().filter(item -> item.getStatus() == SystemStatus.DOWN).count();
+        var current=readModel.read(period,environment,null);
+        var before=readModel.read(previous,environment,null);
+        List<MonitoredSystem> systems=current.systems();
+        BigDecimal availability=current.averageAvailability();
+        BigDecimal previousAvailability=before.averageAvailability();
+        BigDecimal coverage=current.lineCoverage();
+        BigDecimal previousCoverage=before.lineCoverage();
+        long activeIncidents=current.activeIncidents();
+        long currentIncidents=current.incidents().size();
+        long previousIncidents=before.incidents().size();
+        long currentDeployments=current.deployments().size();
+        int operational=(int)current.status(SystemStatus.OPERATIONAL);
+        int degraded=(int)current.status(SystemStatus.DEGRADED);
+        int down=(int)current.status(SystemStatus.DOWN);
 
         return new DashboardSummaryResponse(
-                systems.size(), availability, availability.subtract(previousAvailability).setScale(2, RoundingMode.HALF_UP),
+                systems.size(), availability, difference(availability, previousAvailability),
                 activeIncidents, currentIncidents - previousIncidents,
-                coverage, coverage.subtract(previousCoverage).setScale(2, RoundingMode.HALF_UP),
-                currentDeployments, operational, degraded, down, overallHealth(down, degraded, activeIncidents),
-                normalizePeriod(periodValue));
+                coverage, difference(coverage, previousCoverage),
+                currentDeployments, operational, degraded, down, systems.stream().noneMatch(MonitoredSystem::isActive) || systems.stream().filter(MonitoredSystem::isActive).allMatch(item -> item.getStatus() == SystemStatus.UNKNOWN || item.getStatus()==SystemStatus.MAINTENANCE) ? "UNKNOWN" : overallHealth(down, degraded+(int)current.status(SystemStatus.CONFIGURATION_REQUIRED), activeIncidents),
+                normalizePeriod(periodValue),(int)current.status(SystemStatus.CONFIGURATION_REQUIRED),down+degraded+(int)current.status(SystemStatus.CONFIGURATION_REQUIRED));
     }
 
     @Transactional(readOnly = true)
@@ -121,10 +111,14 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public List<LatencyPointResponse> latency(String periodValue, Environment environment) {
+        return latency(periodValue,environment,null);
+    }
+    @Transactional(readOnly=true)
+    public List<LatencyPointResponse> latency(String periodValue,Environment environment,UUID systemId) {
         TimeRange period = period(periodValue);
         boolean hourly = "24h".equals(normalizePeriod(periodValue));
         Map<OffsetDateTime, List<Long>> buckets = new LinkedHashMap<>();
-        checks(period, environment).stream()
+        readModel.read(period,environment,systemId).checks().stream()
                 .filter(check -> check.getHttpStatus() != null)
                 .forEach(check -> buckets.computeIfAbsent(bucket(check.getCheckedAt(), hourly), ignored -> new ArrayList<>())
                         .add(check.getResponseTimeMs()));
@@ -175,7 +169,6 @@ public class DashboardService {
         Map<UUID, List<HealthCheck>> bySystem = allChecks.stream()
                 .collect(Collectors.groupingBy(check -> check.getMonitoredSystem().getId()));
         return systemRepository.findAll().stream()
-                .filter(MonitoredSystem::isActive)
                 .filter(system -> environment == null || system.getEnvironment() == environment)
                 .sorted(Comparator.comparing(MonitoredSystem::getName, String.CASE_INSENSITIVE_ORDER))
                 .map(system -> health(system, bySystem.getOrDefault(system.getId(), List.of())))
@@ -185,16 +178,16 @@ public class DashboardService {
     private SystemHealthResponse health(MonitoredSystem system, List<HealthCheck> checks) {
         List<HealthCheck> sorted = checks.stream().sorted(Comparator.comparing(HealthCheck::getCheckedAt)).toList();
         long successful = sorted.stream().filter(HealthCheck::isSuccess).count();
-        BigDecimal uptime = percentage(successful, sorted.size());
-        HealthCheck last = sorted.isEmpty() ? null : sorted.getLast();
+        BigDecimal uptime = OperationalReadModel.availability(sorted);
+        HealthCheck last = healthCheckRepository.findFirstByMonitoredSystemIdOrderByCheckedAtDesc(system.getId()).orElse(sorted.isEmpty() ? null : sorted.getLast());
         List<Long> sparkline = sorted.stream()
                 .filter(check -> check.getHttpStatus() != null)
-                .skip(Math.max(0, sorted.size() - 12L))
+                .skip(Math.max(0, sorted.stream().filter(check -> check.getHttpStatus()!=null).count() - 12L))
                 .map(HealthCheck::getResponseTimeMs)
                 .toList();
         return new SystemHealthResponse(
                 system.getId(), system.getName(), system.getEnvironment(), system.getStatus(), uptime,
-                last == null ? null : last.getResponseTimeMs(), last == null ? null : last.getCheckedAt(), sparkline);
+                last == null || last.getHttpStatus() == null ? null : last.getResponseTimeMs(), last == null ? null : last.getCheckedAt(), sparkline, system.getStatusReason(), system.getStatusChangedAt(),system.isActive(),sorted.size());
     }
 
     private LatencyPointResponse latencyPoint(OffsetDateTime timestamp, List<Long> samples) {
@@ -206,41 +199,8 @@ public class DashboardService {
         return new LatencyPointResponse(timestamp, average, sorted.get(index), sorted.size());
     }
 
-    private BigDecimal aggregateAvailability(List<MonitoredSystem> systems, List<HealthCheck> checks) {
-        if (systems.isEmpty()) {
-            return BigDecimal.ZERO.setScale(2);
-        }
-        Map<UUID, List<HealthCheck>> grouped = checks.stream()
-                .collect(Collectors.groupingBy(check -> check.getMonitoredSystem().getId()));
-        List<BigDecimal> withData = systems.stream()
-                .map(system -> grouped.getOrDefault(system.getId(), List.of()))
-                .filter(list -> !list.isEmpty())
-                .map(list -> percentage(list.stream().filter(HealthCheck::isSuccess).count(), list.size()))
-                .toList();
-        if (withData.isEmpty()) {
-            return BigDecimal.ZERO.setScale(2);
-        }
-        return withData.stream().reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(withData.size()), 2, RoundingMode.HALF_UP);
-    }
-
-    private BigDecimal averageLatestCoverage(List<TestReport> reports, OffsetDateTime before) {
-        Map<UUID, TestReport> latest = reports.stream()
-                .filter(report -> !report.getGeneratedAt().isAfter(before))
-                .collect(Collectors.toMap(
-                        report -> report.getMonitoredSystem().getId(),
-                        Function.identity(),
-                        (left, right) -> left.getGeneratedAt().isAfter(right.getGeneratedAt()) ? left : right));
-        if (latest.isEmpty()) {
-            return BigDecimal.ZERO.setScale(2);
-        }
-        return latest.values().stream().map(TestReport::getLineCoverage).reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(latest.size()), 2, RoundingMode.HALF_UP);
-    }
-
     private List<HealthCheck> checks(TimeRange period, Environment environment) {
         return healthCheckRepository.findAllByCheckedAtBetweenOrderByCheckedAtAsc(period.start(), period.end()).stream()
-                .filter(check -> check.getMonitoredSystem().isActive())
                 .filter(check -> environment == null || check.getMonitoredSystem().getEnvironment() == environment)
                 .toList();
     }
@@ -282,9 +242,13 @@ public class DashboardService {
         return time != null && !time.isBefore(period.start()) && !time.isAfter(period.end());
     }
 
+    private BigDecimal difference(BigDecimal current, BigDecimal previous) {
+        return current == null || previous == null ? null : current.subtract(previous).setScale(2, RoundingMode.HALF_UP);
+    }
+
     private BigDecimal percentage(long numerator, long denominator) {
         if (denominator == 0) {
-            return BigDecimal.ZERO.setScale(2);
+            return null;
         }
         return BigDecimal.valueOf(numerator).multiply(ONE_HUNDRED)
                 .divide(BigDecimal.valueOf(denominator), 2, RoundingMode.HALF_UP);

@@ -9,6 +9,8 @@ const statusColors: Record<SystemStatus, 'success' | 'warning' | 'error' | 'defa
   DEGRADED: 'warning',
   DOWN: 'error',
   UNKNOWN: 'default',
+  MAINTENANCE: 'default',
+  CONFIGURATION_REQUIRED: 'warning',
 };
 
 export function SystemStatusChip({ status, active = true, label }: { status: SystemStatus; active?: boolean; label?: string }) {
@@ -18,7 +20,7 @@ export function SystemStatusChip({ status, active = true, label }: { status: Sys
       color={active ? statusColors[status] : 'default'}
       variant="outlined"
       icon={active ? <FiberManualRecordRoundedIcon /> : <PauseCircleOutlineRoundedIcon />}
-      label={label ?? (active ? statusLabels[status] : 'Manutenção')}
+      label={label ?? (active ? statusLabels[status] : 'Pausado')}
       sx={{
         height: 25,
         borderRadius: 1.5,

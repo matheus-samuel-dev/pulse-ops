@@ -119,7 +119,7 @@ class DeploymentServiceTest {
                     new CreateDeploymentCommand(
                             "  ", Environment.STAGING, "abcdef1", null, NOW_OFFSET)))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("version is required");
+                    .hasMessageContaining("versão do deploy é obrigatória");
 
             verify(deploymentRepository, never()).save(any());
         }
@@ -133,18 +133,18 @@ class DeploymentServiceTest {
                     systemId,
                     new CreateDeploymentCommand("1.2.3", Environment.STAGING, "xyz1234", null, NOW_OFFSET)))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("Commit hash");
+                    .hasMessageContaining("hash do commit");
             assertThatThrownBy(() -> deploymentService.create(
                     systemId,
                     new CreateDeploymentCommand("1.2.3", null, null, null, NOW_OFFSET)))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("environment");
+                    .hasMessageContaining("ambiente");
             assertThatThrownBy(() -> deploymentService.create(
                     systemId,
                     new CreateDeploymentCommand(
                             "1.2.3", Environment.STAGING, null, null, NOW_OFFSET.plusNanos(1))))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("future");
+                    .hasMessageContaining("futuro");
             assertThatThrownBy(() -> deploymentService.create(
                     systemId,
                     new CreateDeploymentCommand(
@@ -252,7 +252,7 @@ class DeploymentServiceTest {
 
             assertThatThrownBy(() -> deploymentService.fail(running.getId(), -1))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("negative");
+                    .hasMessageContaining("negativa");
 
             assertThat(running.getStatus()).isEqualTo(DeploymentStatus.RUNNING);
             assertThat(running.getDurationSeconds()).isNull();

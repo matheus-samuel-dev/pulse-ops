@@ -1,0 +1,19 @@
+{
+  "email": "consistency-baace7b0-f128-4feb-9172-3318fca23a09@example.org",
+  "systemId": "800f562a-740c-4e6a-aa20-4c86e6d75389",
+  "initialCheck": {
+    "id": "757393c4-2c69-40a7-a169-ac864a2f5f99",
+    "systemId": "800f562a-740c-4e6a-aa20-4c86e6d75389",
+    "checkedAt": "2026-10-04T10:13:28.174802Z",
+    "httpStatus": 200,
+    "responseTimeMs": 31,
+    "success": true,
+    "failureType": "NONE"
+  },
+  "browserCheckRequests": [],
+  "beforeChecks": 4,
+  "afterChecks": 5,
+  "incidentId": "7ea7bd2c-856d-4909-8b37-dd96dc6feceb",
+  "backendOnlyFirstCheck": true,
+  "consistencyAfterRestart": true
+}

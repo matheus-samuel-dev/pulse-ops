@@ -43,7 +43,7 @@ class GlobalExceptionHandlerTest {
         assertError(
                 response,
                 HttpStatus.NOT_FOUND,
-                "Monitored system not found: system-42",
+                "Sistema não encontrado: system-42",
                 "/api/systems/missing"
         );
     }
@@ -79,7 +79,7 @@ class GlobalExceptionHandlerTest {
         assertError(
                 response,
                 HttpStatus.UNPROCESSABLE_ENTITY,
-                "Invalid deployment state transition from SUCCESS to RUNNING",
+                "Transição de deploy inválida: SUCCESS → RUNNING",
                 "/api/systems/missing"
         );
     }

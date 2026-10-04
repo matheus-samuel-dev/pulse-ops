@@ -21,13 +21,27 @@ public record MonitoredSystemResponse(
         long latencyThresholdMs,
         BigDecimal targetAvailability,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime updatedAt,
+        String statusReason,
+        OffsetDateTime statusChangedAt,
+        OffsetDateTime lastFailureAt,
+        int monitoringIntervalSeconds,
+        boolean maintenance,
+        com.pulseops.dto.monitoring.HealthCheckResponse lastCheck
 ) {
+    public MonitoredSystemResponse(UUID id,String name,String description,String baseUrl,String healthEndpoint,
+            Environment environment,SystemStatus status,boolean active,int expectedStatusCode,int timeoutMs,
+            long latencyThresholdMs,BigDecimal targetAvailability,OffsetDateTime createdAt,OffsetDateTime updatedAt) {
+        this(id,name,description,baseUrl,healthEndpoint,environment,status,active,expectedStatusCode,timeoutMs,
+                latencyThresholdMs,targetAvailability,createdAt,updatedAt,null,null,null,60,false,null);
+    }
+    public MonitoredSystemResponse withLastCheck(com.pulseops.dto.monitoring.HealthCheckResponse check){return new MonitoredSystemResponse(id,name,description,baseUrl,healthEndpoint,environment,status,active,expectedStatusCode,timeoutMs,latencyThresholdMs,targetAvailability,createdAt,updatedAt,statusReason,statusChangedAt,lastFailureAt,monitoringIntervalSeconds,maintenance,check);}
     public static MonitoredSystemResponse from(MonitoredSystem system) {
         return new MonitoredSystemResponse(
                 system.getId(), system.getName(), system.getDescription(), system.getBaseUrl(),
                 system.getHealthEndpoint(), system.getEnvironment(), system.getStatus(), system.isActive(),
                 system.getExpectedStatusCode(), system.getTimeoutMs(), system.getLatencyThresholdMs(),
-                system.getTargetAvailability(), system.getCreatedAt(), system.getUpdatedAt());
+                system.getTargetAvailability(), system.getCreatedAt(), system.getUpdatedAt(),
+                system.getStatusReason(), system.getStatusChangedAt(), system.getLastFailureAt(),system.getMonitoringIntervalSeconds(),system.isMaintenance(),null);
     }
 }

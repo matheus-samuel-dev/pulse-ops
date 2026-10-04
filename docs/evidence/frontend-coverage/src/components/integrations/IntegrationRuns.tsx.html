@@ -1,0 +1,265 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for src/components/integrations/IntegrationRuns.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/components/integrations</a> IntegrationRuns.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">50% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>26/52</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">46.8% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>22/47</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">26.66% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>4/15</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">57.57% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>19/33</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line medium'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">41x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Alert, Button, Chip, MenuItem, Pagination, Stack, TextField, Typography } from '@mui/material';
+import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '../../auth/AuthContext';
+import { connectionsService, runLabels, type IntegrationRun } from '../../services/connectionsService';
+import { systemsService } from '../../services/systemsService';
+import { getApiErrorMessage } from '../../services/api';
+import type { MonitoredSystem } from '../../types/api';
+import { Panel } from '../common/Panel';
+import { ViewState } from '../common/ViewState';
+&nbsp;
+export function IntegrationRuns({ systemId, revision = 0 }: { systemId?: string; revision?: number }) {
+  const { user } = useAuth();
+  const canManage = user?.role === 'ADMIN' || user?.role === 'DEVELOPER';
+  const [runs, setRuns] = useState&lt;IntegrationRun[]&gt;([]);
+  const [systems, setSystems] = useState&lt;MonitoredSystem[]&gt;([]);
+  const [target, setTarget] = useState(systemId ?? '');
+  const [page, setPage] = useState(0);
+  const [pages, setPages] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState&lt;string | null&gt;(null);
+  const load = useCallback(async () =&gt; {
+    setLoading(true); setError(null);
+    try { const result = await connectionsService.runs(systemId, page); setRuns(result.content); setPages(result.totalPages); }
+    catch (failure) { <span class="cstat-no" title="statement not covered" >setError(getApiErrorMessage(failure)); }</span> finally { setLoading(false); }
+  }, [systemId, page]);
+  useEffect(() =&gt; { void load(); }, [load, revision]);
+  useEffect(() =&gt; { <span class="missing-if-branch" title="else path not taken" >E</span>if (!systemId) systemsService.list().then(setSystems).catch(<span class="fstat-no" title="function not covered" >failure =&gt; <span class="cstat-no" title="statement not covered" >s</span>etError(getApiErrorMessage(failure)))</span>; }, [systemId]);
+  const request = <span class="fstat-no" title="function not covered" >async (s</span>lug: string) =&gt; {
+    // Explicit confirmation is necessary before asking a remote auditing service to inspect a URL.
+<span class="cstat-no" title="statement not covered" >    if (slug === 'ai-web-auditor' &amp;&amp; !window.confirm('Confirmo que tenho autorização para auditar este sistema. Solicitar auditoria ao AI Web Auditor?')) <span class="cstat-no" title="statement not covered" >return;</span></span>
+<span class="cstat-no" title="statement not covered" >    setBusy(true); <span class="cstat-no" title="statement not covered" >s</span>etError(null);</span>
+<span class="cstat-no" title="statement not covered" >    try { <span class="cstat-no" title="statement not covered" >await connectionsService.request(slug, target, slug === 'ai-web-auditor'); <span class="cstat-no" title="statement not covered" >a</span>wait load(); }</span></span>
+    catch (failure) { <span class="cstat-no" title="statement not covered" >setError(getApiErrorMessage(failure)); }</span> finally { <span class="cstat-no" title="statement not covered" >setBusy(false); }</span>
+  };
+  const refresh = <span class="fstat-no" title="function not covered" >async (i</span>d: string) =&gt; {
+<span class="cstat-no" title="statement not covered" >    setBusy(true); <span class="cstat-no" title="statement not covered" >s</span>etError(null);</span>
+<span class="cstat-no" title="statement not covered" >    try { <span class="cstat-no" title="statement not covered" >await connectionsService.refresh(id); <span class="cstat-no" title="statement not covered" >a</span>wait load(); }</span></span>
+    catch (failure) { <span class="cstat-no" title="statement not covered" >setError(getApiErrorMessage(failure)); }</span> finally { <span class="cstat-no" title="statement not covered" >setBusy(false); }</span>
+  };
+  return &lt;Panel sx={{ p: { xs: 2, md: 2.5 }, mt: 3 }}&gt;
+    &lt;Typography variant="h2"&gt;Execuções das integrações&lt;/Typography&gt;
+    &lt;Typography variant="body2" color="text.secondary" mt={1}&gt;O Pulse Ops acompanha as respostas dos serviços. O AI Web Auditor analisa; o Nexus Flow executa os workflows.&lt;/Typography&gt;
+    {canManage &amp;&amp; &lt;Stack direction={{ xs: 'column', md: 'row' }} gap={1} my={2}&gt;
+      {!systemId &amp;&amp; &lt;TextField select size="small" label="Sistema alvo" value={target} onChange={<span class="fstat-no" title="function not covered" >event =&gt; <span class="cstat-no" title="statement not covered" >s</span>etTarget(event.target.value)} s</span>x={{ minWidth: 190 }}&gt;{systems.map(<span class="fstat-no" title="function not covered" >system =&gt; <span class="cstat-no" title="statement not covered" >&lt;</span>MenuItem key={system.id} value={system.id}&gt;{system.name}&lt;/MenuItem&gt;)</span>}&lt;/TextField&gt;}
+      &lt;Button variant="outlined" disabled={busy || !target} onClick={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >v</span>oid request('ai-web-auditor')}&gt;S</span>olicitar auditoria&lt;/Button&gt;
+      &lt;Button variant="outlined" disabled={busy || !target} onClick={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >v</span>oid request('nexus-flow')}&gt;A</span>cionar Nexus Flow&lt;/Button&gt;
+    &lt;/Stack&gt;}
+    {error &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >&lt;Alert severity="error" action={&lt;Button onClick={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >v</span>oid load()} c</span>olor="inherit"&gt;Atualizar&lt;/Button&gt;}&gt;{error}&lt;/Alert&gt;}</span>
+    {loading &amp;&amp; &lt;Typography role="status" my={2}&gt;Carregando execuções…&lt;/Typography&gt;}
+    {!loading &amp;&amp; !runs.length &amp;&amp; !error &amp;&amp; &lt;ViewState kind="empty" title="Nenhuma execução registrada" description="Configure uma integração e solicite uma execução para acompanhar o resultado real." /&gt;}
+    &lt;Stack spacing={2} mt={2}&gt;{runs.map(<span class="fstat-no" title="function not covered" >run =&gt; <span class="cstat-no" title="statement not covered" >&lt;</span>Stack key={run.id} spacing={1} sx={{ borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}&gt;</span>
+      &lt;Stack direction="row" flexWrap="wrap" gap={1} alignItems="center"&gt;&lt;Typography fontWeight={650}&gt;{run.systemName} · {run.slug === 'ai-web-auditor' ? 'AI Web Auditor' : 'Nexus Flow'}&lt;/Typography&gt;&lt;Chip size="small" label={runLabels[run.state] ?? run.state} color={run.state === 'FAILED' ? 'error' : run.state === 'COMPLETED' ? 'success' : 'default'} /&gt;&lt;/Stack&gt;
+      &lt;Typography variant="body2" color="text.secondary"&gt;{run.message}&lt;/Typography&gt;
+      &lt;Typography variant="caption" color="text.secondary"&gt;Solicitada em {new Date(run.createdAt).toLocaleString('pt-BR')} · Última comunicação: {new Date(run.updatedAt).toLocaleString('pt-BR')}{run.httpStatus ? ` · HTTP ${run.httpStatus}` : ''}{run.overallScore != null ? ` · Nota da auditoria: ${run.overallScore}/100` : ''}&lt;/Typography&gt;
+      &lt;Stack direction="row" flexWrap="wrap" gap={1}&gt;{canManage &amp;&amp; run.slug === 'ai-web-auditor' &amp;&amp; run.externalId &amp;&amp; &lt;Button size="small" disabled={busy} onClick={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >v</span>oid refresh(run.id)}&gt;C</span>onsultar resultado&lt;/Button&gt;}{run.reportUrl &amp;&amp; &lt;Button size="small" component="a" href={run.reportUrl} target="_blank" rel="noopener noreferrer"&gt;Abrir relatório&lt;/Button&gt;}&lt;/Stack&gt;
+    &lt;/Stack&gt;)}&lt;/Stack&gt;
+    {pages &gt; 1 &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >&lt;Pagination count={pages} page={page + 1} onChange={<span class="fstat-no" title="function not covered" >(_</span>, value) =&gt; <span class="cstat-no" title="statement not covered" >setPage(value - 1)} a</span>ria-label="Páginas de execuções" sx={{ mt: 2 }} /&gt;}</span>
+  &lt;/Panel&gt;;
+}
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-10-03T22:46:20.468Z
+            </div>
+        <script src="../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
+    </body>
+</html>
+    

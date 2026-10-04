@@ -60,6 +60,8 @@ public class TestReport extends AuditableEntity {
     @Column(name = "generated_at", nullable = false)
     private OffsetDateTime generatedAt;
 
+    @Column(nullable=false,length=40) private String source="API_IMPORT";
+    public String getSource(){return source;}
     public TestReport() {
     }
 

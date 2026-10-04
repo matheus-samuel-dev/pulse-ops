@@ -1,0 +1,39 @@
+# Isolated fixture infrastructure. Never load this file in production.
+name: pulseops-e2e
+services:
+  postgres:
+    ports: !override
+      - "127.0.0.1:55433:5432"
+  backend:
+    ports: !override
+      - "127.0.0.1:18084:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      MONITORING_ENABLED: "false"
+      MONITORING_ALLOW_PRIVATE_NETWORKS: "true"
+      DEMO_READ_ONLY: "false"
+      DEMO_SEED_ENABLED: "false"
+      CORS_ALLOWED_ORIGINS: http://localhost:3001,http://127.0.0.1:3001
+  frontend:
+    ports: !override
+      - "127.0.0.1:3001:80"
+  fixture:
+    image: node:24-alpine
+    command: ["node", "/tests/server.mjs"]
+    volumes:
+      - ./tests/fixtures/server.mjs:/tests/server.mjs:ro
+    networks: [pulseops-network]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+volumes:
+  pulseops-postgres-data:
+    name: pulseops-e2e-postgres-data
+networks:
+  pulseops-network:
+    name: pulseops-e2e-network

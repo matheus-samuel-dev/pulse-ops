@@ -13,6 +13,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface TestReportRepository extends JpaRepository<TestReport, UUID> {
+    @Override
+    @Query("select item from TestReport item join fetch item.monitoredSystem system where " + com.pulseops.security.AccountScope.SYSTEM)
+    List<TestReport> findAll();
+
+    @Override
+    @Query("select item from TestReport item join fetch item.monitoredSystem system where item.id = :id and " + com.pulseops.security.AccountScope.SYSTEM)
+    java.util.Optional<TestReport> findById(@Param("id") UUID id);
+
 
     Optional<TestReport> findFirstByMonitoredSystemIdOrderByCreatedAtDesc(UUID systemId);
 
@@ -33,17 +41,20 @@ public interface TestReportRepository extends JpaRepository<TestReport, UUID> {
             from TestReport report
             join report.monitoredSystem system
             where system.active = true
+              and (:#{T(com.pulseops.security.AccountScope).unrestricted()} = true or system.ownerId = :#{T(com.pulseops.security.AccountScope).userId()})
             order by system.name asc, report.generatedAt desc
             """)
     List<TestReport> findAllForActiveSystemsOrderedBySystemAndGeneratedAt();
 
     @EntityGraph(attributePaths = "monitoredSystem")
+    @Query("select item from TestReport item join fetch item.monitoredSystem system where item.generatedAt between :start and :end and " + com.pulseops.security.AccountScope.SYSTEM + " order by item.generatedAt")
     List<TestReport> findAllByMonitoredSystem_ActiveTrueAndGeneratedAtBetweenOrderByGeneratedAtAsc(
             OffsetDateTime start,
             OffsetDateTime end
     );
 
     @EntityGraph(attributePaths = "monitoredSystem")
+    @Query("select item from TestReport item join fetch item.monitoredSystem system where " + com.pulseops.security.AccountScope.SYSTEM + " order by item.generatedAt")
     List<TestReport> findAllByMonitoredSystem_ActiveTrueOrderByGeneratedAtAsc();
 
     @EntityGraph(attributePaths = "monitoredSystem")
@@ -61,6 +72,7 @@ public interface TestReportRepository extends JpaRepository<TestReport, UUID> {
             from TestReport report
             join fetch report.monitoredSystem system
             where system.active = true
+              and (:#{T(com.pulseops.security.AccountScope).unrestricted()} = true or system.ownerId = :#{T(com.pulseops.security.AccountScope).userId()})
               and report.generatedAt <= :end
               and report.generatedAt = (
                   select max(candidate.generatedAt)
@@ -81,6 +93,7 @@ public interface TestReportRepository extends JpaRepository<TestReport, UUID> {
             from TestReport report
             join fetch report.monitoredSystem system
             where system.active = true
+              and (:#{T(com.pulseops.security.AccountScope).unrestricted()} = true or system.ownerId = :#{T(com.pulseops.security.AccountScope).userId()})
               and report.generatedAt between :start and :end
               and (:environment is null or system.environment = :environment)
             order by report.generatedAt desc

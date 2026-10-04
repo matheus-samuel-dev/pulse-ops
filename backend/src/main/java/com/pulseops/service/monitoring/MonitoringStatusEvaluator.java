@@ -47,13 +47,13 @@ public class MonitoringStatusEvaluator {
             HealthProbeResult probe,
             List<HealthCheck> previousChecks
     ) {
-        Objects.requireNonNull(system, "system is required");
-        Objects.requireNonNull(probe, "probe is required");
+        Objects.requireNonNull(system, "system é obrigatório");
+        Objects.requireNonNull(probe, "probe é obrigatório");
         previousChecks = previousChecks == null ? List.of() : previousChecks;
 
         if (probe.failureType() != ProbeFailureType.NONE) {
             return new MonitoringDecision(
-                    SystemStatus.DOWN,
+                    probe.failureType()==ProbeFailureType.SECURITY_POLICY ? SystemStatus.CONFIGURATION_REQUIRED : 1+countConsecutiveFailures(previousChecks)>=failuresForDown ? SystemStatus.DOWN : SystemStatus.DEGRADED,
                     false,
                     transportFailureReason(probe.failureType())
             );
@@ -62,19 +62,18 @@ public class MonitoringStatusEvaluator {
         boolean expectedStatus = probe.httpStatus() == system.getExpectedStatusCode();
         if (!expectedStatus) {
             long consecutiveFailures = 1 + countConsecutiveFailures(previousChecks);
-            boolean criticalHttpStatus = probe.httpStatus() >= 500;
-            if (criticalHttpStatus || consecutiveFailures >= failuresForDown) {
+            if (consecutiveFailures >= failuresForDown) {
                 return new MonitoringDecision(
                         SystemStatus.DOWN,
                         false,
-                        "Unexpected HTTP status %d (expected %d)".formatted(
+                        "O endpoint retornou HTTP %d; esperado HTTP %d".formatted(
                                 probe.httpStatus(), system.getExpectedStatusCode())
                 );
             }
             return new MonitoringDecision(
                     SystemStatus.DEGRADED,
                     false,
-                    "Unexpected HTTP status %d (expected %d)".formatted(
+                    "O endpoint retornou HTTP %d; esperado HTTP %d".formatted(
                             probe.httpStatus(), system.getExpectedStatusCode())
             );
         }
@@ -83,7 +82,7 @@ public class MonitoringStatusEvaluator {
             return new MonitoringDecision(
                     SystemStatus.DEGRADED,
                     true,
-                    "Latency %d ms exceeded the %d ms threshold".formatted(
+                    "Resposta de %d ms acima do limite de %d ms".formatted(
                             probe.responseTimeMs(), system.getLatencyThresholdMs())
             );
         }
@@ -92,15 +91,19 @@ public class MonitoringStatusEvaluator {
                 .limit(Math.max(0, recentWindowSize - 1L))
                 .filter(check -> !check.isSuccess())
                 .count();
-        if (recentFailures >= recentFailuresForDegraded) {
+        boolean recovered = !previousChecks.isEmpty() && previousChecks.getFirst().isSuccess()
+                && previousChecks.getFirst().getHttpStatus() != null
+                && previousChecks.getFirst().getHttpStatus() == system.getExpectedStatusCode()
+                && previousChecks.getFirst().getResponseTimeMs() <= system.getLatencyThresholdMs();
+        if (!recovered && recentFailures >= recentFailuresForDegraded) {
             return new MonitoringDecision(
                     SystemStatus.DEGRADED,
                     true,
-                    "%d recent failures indicate instability".formatted(recentFailures)
+                    "%d falhas recentes indicam instabilidade".formatted(recentFailures)
             );
         }
 
-        return new MonitoringDecision(SystemStatus.OPERATIONAL, true, "Health check succeeded");
+        return new MonitoringDecision(SystemStatus.OPERATIONAL, true, "Verificação bem-sucedida");
     }
 
     private long countConsecutiveFailures(List<HealthCheck> checks) {
@@ -116,13 +119,13 @@ public class MonitoringStatusEvaluator {
 
     private String transportFailureReason(ProbeFailureType failureType) {
         return switch (failureType) {
-            case TIMEOUT -> "Health check timed out";
-            case DNS -> "Health check failed due to DNS resolution";
-            case CONNECTION_REFUSED -> "Health check connection was refused";
-            case NETWORK -> "Health check failed due to a network error";
-            case SECURITY_POLICY -> "Health check target was blocked by the outbound security policy";
-            case UNEXPECTED -> "Health check failed unexpectedly";
-            case NONE -> "Health check reached the remote system";
+            case TIMEOUT -> "O sistema não respondeu dentro do tempo limite";
+            case DNS -> "Não foi possível resolver o endereço do sistema";
+            case CONNECTION_REFUSED -> "Não foi possível conectar ao sistema monitorado";
+            case NETWORK -> "Falha de comunicação com o sistema monitorado";
+            case SECURITY_POLICY -> "Destino bloqueado pela política de segurança";
+            case UNEXPECTED -> "Não foi possível concluir a verificação";
+            case NONE -> "O sistema respondeu à verificação";
         };
     }
 }

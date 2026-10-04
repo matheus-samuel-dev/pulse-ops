@@ -1,6 +1,7 @@
 import { Box, Stack, Typography, useTheme } from '@mui/material';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import type { ErrorBreakdown } from '../../types/api';
+import { ViewState } from '../common/ViewState';
 import { Panel } from '../common/Panel';
 
 export function ErrorDonut({ data }: { data: ErrorBreakdown }) {
@@ -8,10 +9,10 @@ export function ErrorDonut({ data }: { data: ErrorBreakdown }) {
   const entries = [
     { name: '5xx', value: data.serverErrors, color: theme.palette.error.main },
     { name: '4xx', value: data.clientErrors, color: theme.palette.warning.main },
-    { name: 'Timeout', value: data.timeouts, color: theme.palette.secondary.main },
+    { name: 'Tempo limite', value: data.timeouts, color: theme.palette.secondary.main },
     { name: 'Outros', value: data.others, color: theme.palette.info.main },
   ];
-  const displayEntries = data.total ? entries : [{ name: 'Sem erros', value: 1, color: theme.palette.divider }];
+  const displayEntries = entries;
 
   return (
     <Panel sx={{ p: { xs: 2, md: 2.5 }, minWidth: 0 }}>
@@ -19,7 +20,7 @@ export function ErrorDonut({ data }: { data: ErrorBreakdown }) {
       <Typography color="text.secondary" variant="body2" mt={0.45}>
         Distribuição das falhas observadas
       </Typography>
-      <Box position="relative" height={180} mt={1}>
+      {data.total === 0 ? <ViewState kind="empty" title="Nenhuma falha registrada" description="As falhas aparecerão aqui quando forem detectadas por uma verificação." /> : <Box position="relative" height={180} mt={1}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -54,7 +55,7 @@ export function ErrorDonut({ data }: { data: ErrorBreakdown }) {
             eventos
           </Typography>
         </Stack>
-      </Box>
+      </Box>}
       <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap={1.15}>
         {entries.map((entry) => (
           <Stack direction="row" alignItems="center" justifyContent="space-between" key={entry.name}>

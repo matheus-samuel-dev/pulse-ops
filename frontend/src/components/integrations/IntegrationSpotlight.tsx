@@ -16,12 +16,12 @@ export function IntegrationSpotlight({ integration, onDetails }: { integration: 
         <Chip size="small" variant="outlined" color="primary" label="Integração principal" sx={{ mt: 1.25 }} />
       </Box>
     </Stack>
-    <Typography variant="body2" color="text.secondary" mt={2}>Disponibilidade e relatórios de qualidade reunidos no Pulse Ops, para acompanhar a operação e investigar falhas no mesmo lugar.</Typography>
+    <Typography variant="body2" color="text.secondary" mt={2}>Monitore o serviço e acompanhe as auditorias solicitadas para os seus sistemas. A análise é executada pelo AI Web Auditor.</Typography>
     <Box component="dl" display="grid" gridTemplateColumns={{ xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))' }} gap={2} my={2.5}>
       <IntegrationMetric label="Último relatório"><IntegrationTime value={integration.lastReportAt} /></IntegrationMetric>
-      <IntegrationMetric label="Última comunicação"><IntegrationTime value={integration.lastCheckedAt} /></IntegrationMetric>
+      <IntegrationMetric label="Última comunicação"><IntegrationTime value={integration.lastSuccessfulSyncAt ?? integration.lastCheckedAt} /></IntegrationMetric>
       <IntegrationMetric label="Tempo de resposta">{formatLatency(integration.responseTimeMs)}</IntegrationMetric>
-      <IntegrationMetric label="Checks · 24h">{integration.checksLast24h.toLocaleString('pt-BR')}</IntegrationMetric>
+      <IntegrationMetric label="Verificações · 24h">{integration.checksLast24h.toLocaleString('pt-BR')}</IntegrationMetric>
     </Box>
     <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} gap={1.5} pt={2} borderTop="1px solid" borderColor="divider">
       <IntegrationStatusBadge integration={integration} />

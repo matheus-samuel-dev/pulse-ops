@@ -12,12 +12,14 @@ import {
 } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '../auth/AuthContext';
 import { PageHeader } from '../components/common/PageHeader';
 import { Panel } from '../components/common/Panel';
 import { isDemoMode } from '../config/demo';
 import { getApiErrorMessage } from '../services/api';
+import { api } from '../services/api';
 import { usersService } from '../services/usersService';
 import { useColorMode } from '../theme/PulseOpsThemeProvider';
 import type { User, UserInput, UserRole } from '../types/api';
@@ -34,10 +36,12 @@ const userSchema = z.object({
 type UserForm = z.infer<typeof userSchema>;
 
 export function SettingsPage() {
+  const navigate = useNavigate();
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user } = useAuth();
   const { mode, toggleColorMode } = useColorMode();
+  const [monitoring, setMonitoring] = useState<{ enabled: boolean; intervalMs: number; failuresToOpen: number; successesToResolve: number } | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(user?.role === 'ADMIN');
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +49,13 @@ export function SettingsPage() {
   const [removeUser, setRemoveUser] = useState<User | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    api.get('/settings/monitoring', { signal: controller.signal })
+      .then(response => setMonitoring(response.data))
+      .catch(failure => { if (!controller.signal.aborted) setError(getApiErrorMessage(failure)); });
+    return () => controller.abort();
+  }, []);
 
   const loadUsers = useCallback(async () => {
     if (user?.role !== 'ADMIN') return;
@@ -87,40 +98,40 @@ export function SettingsPage() {
   );
 
   return <Box px={{ xs: 2, sm: 3, xl: 4 }} py={{ xs: 2.5, md: 3.5 }} maxWidth={1300} mx="auto">
-    <PageHeader title="Configurações" description="Conta, aparência, segurança e acesso da equipe" eyebrow="Workspace" />
+    <PageHeader title="Configurações" description="Conta, aparência e parâmetros operacionais" eyebrow="Área de trabalho" />
     {isDemoMode && <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>O ambiente público é demonstrativo e somente leitura. Preferências locais de aparência continuam disponíveis.</Alert>}
-    <Box display="grid" gridTemplateColumns={{ xs: '1fr', lg: 'minmax(0,.65fr) minmax(0,1.35fr)' }} gap={2}>
-      <Stack spacing={2}>
+    <Box display="grid" gridTemplateColumns={{ xs: 'minmax(0,1fr)', lg: user?.role === 'ADMIN' ? 'minmax(0,.65fr) minmax(0,1.35fr)' : 'minmax(0,1fr)' }} gap={2}>
+      <Stack spacing={user?.role === 'ADMIN' ? 2 : undefined} minWidth={0} sx={user?.role === 'ADMIN' ? {} : { display: 'grid', gridTemplateColumns: { xs: 'minmax(0,1fr)', md: 'repeat(2,minmax(0,1fr))' }, gap: 2 }}>
         <Panel sx={{ p: 2.5 }}>
-          <Typography variant="h2">Seu perfil</Typography>
+          <Stack direction="row" justifyContent="space-between"><Typography variant="h2">Seu perfil</Typography><Button onClick={() => navigate('/perfil')}>Editar perfil</Button></Stack>
           <Stack direction="row" alignItems="center" gap={1.5} mt={2.4}><Avatar sx={{ width: 50, height: 50, bgcolor: 'primary.dark' }}>{user?.name.split(' ').map((part) => part[0]).slice(0, 2).join('')}</Avatar><Box minWidth={0}><Typography fontWeight={700}>{user?.name}</Typography><Typography variant="body2" color="text.secondary" noWrap>{user?.email}</Typography><Chip size="small" label={user ? roleLabel[user.role] : ''} variant="outlined" sx={{ mt: .7 }} /></Box></Stack>
         </Panel>
         <Panel sx={{ p: 2.5 }}>
           <Typography variant="h2">Aparência</Typography><Typography variant="body2" color="text.secondary" mt={.55}>Tema aplicado em toda a interface e salvo neste dispositivo.</Typography>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mt={2.2}><Stack direction="row" gap={1} alignItems="center">{mode === 'dark' ? <DarkModeRoundedIcon color="primary" /> : <LightModeRoundedIcon color="warning" />}<Typography variant="body2">Modo {mode === 'dark' ? 'escuro' : 'claro'}</Typography></Stack><Switch checked={mode === 'dark'} onChange={toggleColorMode} inputProps={{ 'aria-label': 'Alternar tema claro e escuro' }} /></Stack>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" mt={2.2}><Stack direction="row" gap={1} alignItems="center">{mode === 'dark' ? <DarkModeRoundedIcon color="primary" /> : <LightModeRoundedIcon color="warning" />}<Typography variant="body2">Modo {mode === 'dark' ? 'escuro' : 'claro'}</Typography></Stack><Switch checked={mode === 'dark'} onChange={toggleColorMode} slotProps={{ input: { 'aria-label': 'Alternar tema claro e escuro' } }} /></Stack>
         </Panel>
         <Panel sx={{ p: 2.5 }}>
-          <Stack direction="row" gap={1} alignItems="center"><SecurityRoundedIcon color="success" /><Typography variant="h2">Segurança ativa</Typography></Stack>
-          <Stack spacing={1.2} mt={2}><SecurityLine label="Autenticação" value="JWT assinado" /><SecurityLine label="Senhas" value="BCrypt" /><SecurityLine label="Autorização" value="RBAC" /><SecurityLine label="Sessão" value="Expiração automática" /></Stack>
+          <Stack direction="row" gap={1} alignItems="center"><SecurityRoundedIcon color="success" /><Typography variant="h2">Monitoramento</Typography></Stack>
+          <Stack spacing={1.2} mt={2}>{monitoring ? <><SecurityLine label="Automático" value={monitoring.enabled ? "Ativo" : "Pausado"} /><SecurityLine label="Intervalo entre ciclos" value={`${monitoring.intervalMs / 1000} segundos`} /><SecurityLine label="Abrir incidente" value={`${monitoring.failuresToOpen} falhas consecutivas`} /><SecurityLine label="Resolver incidente" value={`${monitoring.successesToResolve} respostas saudáveis`} /></> : <Typography variant="body2">{error ?? "Carregando parâmetros…"}</Typography>}<Typography variant="body2" color="text.secondary">Tempo limite, endpoint e limite de latência são definidos por sistema. O intervalo automático é configurado na implantação.</Typography><Button onClick={() => navigate("/sistemas")}>Configurar sistemas</Button></Stack>
         </Panel>
       </Stack>
-      <Panel sx={{ overflow: 'hidden' }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1} p={2.5}><Box><Typography variant="h2">Equipe e permissões</Typography><Typography variant="body2" color="text.secondary" mt={.45}>{isDemoMode ? 'Acesso exibido em modo somente leitura' : user?.role === 'ADMIN' ? 'Gerencie o acesso ao workspace' : 'Disponível apenas para administradores'}</Typography></Box>{user?.role === 'ADMIN' && !isDemoMode && <Button startIcon={<AddRoundedIcon />} variant="contained" onClick={() => setDialogOpen(true)}>Adicionar pessoa</Button>}</Stack>
+      {user?.role === 'ADMIN' && <Panel sx={{ overflow: 'hidden' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1} p={2.5}><Box><Typography variant="h2">Equipe e permissões</Typography><Typography variant="body2" color="text.secondary" mt={.45}>{isDemoMode ? 'Acesso exibido em modo somente leitura' : user?.role === 'ADMIN' ? 'Gerencie o acesso ao ambiente de trabalho' : 'Disponível apenas para administradores'}</Typography></Box>{user?.role === 'ADMIN' && !isDemoMode && <Button startIcon={<AddRoundedIcon />} variant="contained" onClick={() => setDialogOpen(true)}>Adicionar pessoa</Button>}</Stack>
         {user?.role !== 'ADMIN' ? <Box px={2.5} pb={3}><Alert severity="info">Seu perfil não possui permissão para gerenciar usuários.</Alert></Box>
           : loading ? <Box p={2.5}><Skeleton height={300} /></Box>
           : error ? <Box p={2.5}><Alert severity="error">{error}</Alert></Box>
           : mobile ? <Stack spacing={1.1} px={2} pb={2}>{users.map(memberCard)}</Stack>
-          : <TableContainer><Table><TableHead><TableRow><TableCell>Usuário</TableCell><TableCell>Role</TableCell><TableCell>Criado em</TableCell>{!isDemoMode && <TableCell align="right">Ações</TableCell>}</TableRow></TableHead><TableBody>{users.map((member) => <TableRow key={member.id} hover><TableCell><Typography variant="body2" fontWeight={650}>{member.name}</Typography><Typography variant="caption" color="text.secondary">{member.email}</Typography></TableCell><TableCell><Chip size="small" label={roleLabel[member.role]} variant="outlined" color={member.role === 'ADMIN' ? 'primary' : 'default'} /></TableCell><TableCell><Typography variant="body2" color="text.secondary">{member.createdAt ? new Date(member.createdAt).toLocaleDateString('pt-BR') : '—'}</Typography></TableCell>{!isDemoMode && <TableCell align="right"><Button color="error" size="small" startIcon={<DeleteOutlineRoundedIcon />} disabled={member.id === user.id} onClick={() => setRemoveUser(member)}>Remover</Button></TableCell>}</TableRow>)}</TableBody></Table></TableContainer>}
-      </Panel>
+          : <TableContainer><Table><TableHead><TableRow><TableCell>Usuário</TableCell><TableCell>Permissão</TableCell><TableCell>Criado em</TableCell>{!isDemoMode && <TableCell align="right">Ações</TableCell>}</TableRow></TableHead><TableBody>{users.map((member) => <TableRow key={member.id} hover><TableCell><Typography variant="body2" fontWeight={650}>{member.name}</Typography><Typography variant="caption" color="text.secondary">{member.email}</Typography></TableCell><TableCell><Chip size="small" label={roleLabel[member.role]} variant="outlined" color={member.role === 'ADMIN' ? 'primary' : 'default'} /></TableCell><TableCell><Typography variant="body2" color="text.secondary">{member.createdAt ? new Date(member.createdAt).toLocaleDateString('pt-BR') : '—'}</Typography></TableCell>{!isDemoMode && <TableCell align="right"><Button color="error" size="small" startIcon={<DeleteOutlineRoundedIcon />} disabled={member.id === user.id} onClick={() => setRemoveUser(member)}>Remover</Button></TableCell>}</TableRow>)}</TableBody></Table></TableContainer>}
+      </Panel>}
     </Box>
     <UserCreateDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onCreate={create} onError={setNotice} />
-    <Dialog open={Boolean(removeUser)} onClose={removing ? undefined : () => setRemoveUser(null)}><DialogTitle>Remover acesso?</DialogTitle><DialogContent><Typography color="text.secondary">{removeUser?.name} perderá o acesso ao workspace PulseOps.</Typography></DialogContent><DialogActions><Button onClick={() => setRemoveUser(null)} disabled={removing}>Cancelar</Button><Button color="error" variant="contained" disabled={removing} startIcon={removing ? <CircularProgress size={16} color="inherit" /> : undefined} onClick={() => void remove()}>{removing ? 'Removendo…' : 'Remover usuário'}</Button></DialogActions></Dialog>
+    <Dialog open={Boolean(removeUser)} onClose={removing ? undefined : () => setRemoveUser(null)}><DialogTitle>Remover acesso?</DialogTitle><DialogContent><Typography color="text.secondary">{removeUser?.name} perderá o acesso ao ambiente de trabalho PulseOps.</Typography></DialogContent><DialogActions><Button onClick={() => setRemoveUser(null)} disabled={removing}>Cancelar</Button><Button color="error" variant="contained" disabled={removing} startIcon={removing ? <CircularProgress size={16} color="inherit" /> : undefined} onClick={() => void remove()}>{removing ? 'Removendo…' : 'Remover usuário'}</Button></DialogActions></Dialog>
     <Snackbar open={Boolean(notice)} autoHideDuration={4200} onClose={() => setNotice(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}><Alert variant="filled" severity={notice?.includes('sucesso') || notice?.includes('removido') ? 'success' : 'error'} onClose={() => setNotice(null)}>{notice}</Alert></Snackbar>
   </Box>;
 }
 
 function SecurityLine({ label, value }: { label: string; value: string }) {
-  return <Stack direction="row" justifyContent="space-between"><Typography variant="body2" color="text.secondary">{label}</Typography><Typography variant="body2" fontWeight={650}>{value}</Typography></Stack>;
+  return <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={0.5}><Typography variant="body2" color="text.secondary">{label}</Typography><Typography variant="body2" fontWeight={650}>{value}</Typography></Stack>;
 }
 
 function UserCreateDialog({ open, onClose, onCreate, onError }: { open: boolean; onClose: () => void; onCreate: (input: UserInput) => Promise<void>; onError: (message: string) => void }) {

@@ -23,8 +23,13 @@ public record MonitoredSystemRequest(
         @NotNull Environment environment,
         boolean active,
         @Min(100) @Max(599) int expectedStatusCode,
-        @Positive int timeoutMs,
-        @Positive long latencyThresholdMs,
-        @NotNull @DecimalMin("0.000") @DecimalMax("100.000") BigDecimal targetAvailability
+        @Min(100) @Max(60000) int timeoutMs,
+        @Positive @Max(60000) long latencyThresholdMs,
+        @NotNull @DecimalMin("0.000") @DecimalMax("100.000") BigDecimal targetAvailability,
+        @Min(30) @Max(86400) Integer monitoringIntervalSeconds,
+        boolean maintenance
 ) {
+    public MonitoredSystemRequest(String name,String description,String baseUrl,String healthEndpoint,Environment environment,boolean active,int expectedStatusCode,int timeoutMs,long latencyThresholdMs,BigDecimal targetAvailability) {
+        this(name,description,baseUrl,healthEndpoint,environment,active,expectedStatusCode,timeoutMs,latencyThresholdMs,targetAvailability,60,false);
+    }
 }

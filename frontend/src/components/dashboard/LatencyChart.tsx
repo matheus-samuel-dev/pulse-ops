@@ -9,6 +9,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { LatencyPoint } from '../../types/api';
+import { ViewState } from '../common/ViewState';
 import { Panel } from '../common/Panel';
 
 export function LatencyChart({ data }: { data: LatencyPoint[] }) {
@@ -37,7 +38,7 @@ export function LatencyChart({ data }: { data: LatencyPoint[] }) {
         </Stack>
       </Stack>
       <Box height={278} aria-label="Gráfico de latência das APIs">
-        <ResponsiveContainer width="100%" height="100%">
+        {!data.some(point => point.samples > 0) ? <ViewState kind="empty" title="Ainda não há amostras de latência" description="Execute uma verificação para medir o tempo real de resposta." /> : <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 8, right: 4, left: 8, bottom: 0 }}>
             <defs>
               <linearGradient id="averageLatency" x1="0" y1="0" x2="0" y2="1">
@@ -90,7 +91,7 @@ export function LatencyChart({ data }: { data: LatencyPoint[] }) {
               animationDuration={800}
             />
           </AreaChart>
-        </ResponsiveContainer>
+        </ResponsiveContainer>}
       </Box>
     </Panel>
   );

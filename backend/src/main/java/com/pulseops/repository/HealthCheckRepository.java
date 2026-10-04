@@ -12,6 +12,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface HealthCheckRepository extends JpaRepository<HealthCheck, UUID> {
+    @Override
+    @Query("select item from HealthCheck item join fetch item.monitoredSystem system where " + com.pulseops.security.AccountScope.SYSTEM)
+    List<HealthCheck> findAll();
+
+    @Override
+    @Query("select item from HealthCheck item join fetch item.monitoredSystem system where item.id = :id and " + com.pulseops.security.AccountScope.SYSTEM)
+    java.util.Optional<HealthCheck> findById(@Param("id") UUID id);
+
 
     java.util.Optional<HealthCheck> findFirstByMonitoredSystemIdOrderByCheckedAtDesc(UUID systemId);
 
@@ -24,6 +32,7 @@ public interface HealthCheckRepository extends JpaRepository<HealthCheck, UUID> 
     long countByMonitoredSystemIdInAndCheckedAtGreaterThanEqualAndCheckedAtLessThan(
             List<UUID> systemIds, OffsetDateTime start, OffsetDateTime end);
 
+    @Query("select item from HealthCheck item join fetch item.monitoredSystem system where item.checkedAt between :start and :end and " + com.pulseops.security.AccountScope.SYSTEM + " order by item.checkedAt")
     List<HealthCheck> findAllByCheckedAtBetweenOrderByCheckedAtAsc(
             OffsetDateTime start,
             OffsetDateTime end
@@ -39,6 +48,7 @@ public interface HealthCheckRepository extends JpaRepository<HealthCheck, UUID> 
 
     Page<HealthCheck> findByMonitoredSystemIdOrderByCheckedAtDesc(UUID monitoredSystemId, Pageable pageable);
 
+    Page<HealthCheck> findByMonitoredSystemIdAndCheckedAtBetweenOrderByCheckedAtDesc(UUID systemId,OffsetDateTime start,OffsetDateTime end,Pageable pageable);
     long countByMonitoredSystemIdAndCheckedAtBetween(
             UUID monitoredSystemId,
             OffsetDateTime start,
@@ -56,6 +66,7 @@ public interface HealthCheckRepository extends JpaRepository<HealthCheck, UUID> 
             from HealthCheck check
             join check.monitoredSystem system
             where system.active = true
+              and (:#{T(com.pulseops.security.AccountScope).unrestricted()} = true or system.ownerId = :#{T(com.pulseops.security.AccountScope).userId()})
               and check.checkedAt between :start and :end
               and (:environment is null or system.environment = :environment)
             """)
@@ -70,6 +81,7 @@ public interface HealthCheckRepository extends JpaRepository<HealthCheck, UUID> 
             from HealthCheck check
             join check.monitoredSystem system
             where system.active = true
+              and (:#{T(com.pulseops.security.AccountScope).unrestricted()} = true or system.ownerId = :#{T(com.pulseops.security.AccountScope).userId()})
               and check.success = true
               and check.checkedAt between :start and :end
               and (:environment is null or system.environment = :environment)
@@ -85,6 +97,7 @@ public interface HealthCheckRepository extends JpaRepository<HealthCheck, UUID> 
             from HealthCheck check
             join fetch check.monitoredSystem system
             where system.active = true
+              and (:#{T(com.pulseops.security.AccountScope).unrestricted()} = true or system.ownerId = :#{T(com.pulseops.security.AccountScope).userId()})
               and check.checkedAt between :start and :end
               and (:environment is null or system.environment = :environment)
             order by check.checkedAt desc

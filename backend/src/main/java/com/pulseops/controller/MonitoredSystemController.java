@@ -49,13 +49,13 @@ public class MonitoredSystemController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEVELOPER')")
     public MonitoredSystemResponse create(@Valid @RequestBody MonitoredSystemRequest request) {
         return systemService.create(request);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEVELOPER')")
     public MonitoredSystemResponse update(
             @PathVariable UUID id,
             @Valid @RequestBody MonitoredSystemRequest request
@@ -65,7 +65,7 @@ public class MonitoredSystemController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEVELOPER')")
     public void delete(@PathVariable UUID id) {
         systemService.delete(id);
     }

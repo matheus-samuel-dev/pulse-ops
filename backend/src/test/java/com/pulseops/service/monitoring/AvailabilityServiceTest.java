@@ -58,42 +58,47 @@ class AvailabilityServiceTest {
         List<HealthCheck> checks = List.of(
                 check(true, PERIOD.start()),
                 check(true, PERIOD.start().plusMinutes(30)),
+                check(true, PERIOD.start().plusMinutes(40)),
+                check(true, PERIOD.start().plusMinutes(50)),
                 check(true, PERIOD.end())
         );
 
         AvailabilityMetrics metrics = availabilityService.calculateFromChecks(checks, PERIOD);
 
-        assertThat(metrics.totalChecks()).isEqualTo(3);
-        assertThat(metrics.successfulChecks()).isEqualTo(3);
+        assertThat(metrics.totalChecks()).isEqualTo(5);
+        assertThat(metrics.successfulChecks()).isEqualTo(5);
         assertThat(metrics.failedChecks()).isZero();
         assertThat(metrics.availabilityPercentage()).isEqualByComparingTo("100.000");
     }
 
     @Test
-    void shouldRoundPartialAvailabilityToThreeDecimalPlaces() {
+    void shouldRoundPartialAvailabilityToThreeDecimalPlacesWithSufficientHistory() {
         AvailabilityMetrics metrics = availabilityService.calculateFromChecks(
                 List.of(
                         check(true, PERIOD.start().plusMinutes(10)),
                         check(true, PERIOD.start().plusMinutes(20)),
+                        check(true, PERIOD.start().plusMinutes(25)),
+                        check(true, PERIOD.start().plusMinutes(26)),
+                        check(false, PERIOD.start().plusMinutes(27)),
                         check(false, PERIOD.start().plusMinutes(30))
                 ),
                 PERIOD
         );
 
-        assertThat(metrics.totalChecks()).isEqualTo(3);
-        assertThat(metrics.successfulChecks()).isEqualTo(2);
-        assertThat(metrics.failedChecks()).isEqualTo(1);
+        assertThat(metrics.totalChecks()).isEqualTo(6);
+        assertThat(metrics.successfulChecks()).isEqualTo(4);
+        assertThat(metrics.failedChecks()).isEqualTo(2);
         assertThat(metrics.availabilityPercentage()).isEqualByComparingTo("66.667");
     }
 
     @Test
-    void shouldReturnZeroWhenThereAreNoChecks() {
+    void shouldReturnNoAvailabilityWhenThereAreNoChecks() {
         AvailabilityMetrics metrics = availabilityService.calculateFromChecks(List.of(), PERIOD);
 
         assertThat(metrics.totalChecks()).isZero();
         assertThat(metrics.successfulChecks()).isZero();
         assertThat(metrics.failedChecks()).isZero();
-        assertThat(metrics.availabilityPercentage()).isEqualTo(new BigDecimal("0.000"));
+        assertThat(metrics.availabilityPercentage()).isNull();
     }
 
     @Test
@@ -114,7 +119,7 @@ class AvailabilityServiceTest {
         assertThat(metrics.totalChecks()).isEqualTo(2);
         assertThat(metrics.successfulChecks()).isEqualTo(1);
         assertThat(metrics.failedChecks()).isEqualTo(1);
-        assertThat(metrics.availabilityPercentage()).isEqualByComparingTo("50.000");
+        assertThat(metrics.availabilityPercentage()).isNull();
     }
 
     @Test
@@ -129,7 +134,7 @@ class AvailabilityServiceTest {
 
         AvailabilityMetrics metrics = availabilityService.calculate(systemId, PERIOD);
 
-        assertThat(metrics.availabilityPercentage()).isEqualByComparingTo("100.000");
+        assertThat(metrics.availabilityPercentage()).isNull();
         verify(healthCheckRepository)
                 .findByMonitoredSystemIdAndCheckedAtBetweenOrderByCheckedAtAsc(
                         systemId, PERIOD.start(), PERIOD.end());

@@ -10,8 +10,12 @@ public record OperationalReportResponse(
         OffsetDateTime windowStart,
         OffsetDateTime windowEnd,
         OperationalReportKpis kpis,
-        List<OperationalEventResponse> feed
+        List<OperationalEventResponse> feed,
+        long totalEvents,
+        int eventPages,
+        int eventPage
 ) {
+    public OperationalReportResponse(String period,Environment environment,OffsetDateTime windowStart,OffsetDateTime windowEnd,OperationalReportKpis kpis,List<OperationalEventResponse> feed){this(period,environment,windowStart,windowEnd,kpis,feed,feed.size(),feed.isEmpty()?0:1,0);}
     public OperationalReportResponse {
         feed = List.copyOf(feed);
     }

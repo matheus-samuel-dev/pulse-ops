@@ -38,6 +38,11 @@ public class NotificationService {
     }
 
     @Transactional
+    public NotificationResponse markUnread(UUID userId,UUID notificationId) {
+        Notification notification=notificationRepository.findById(notificationId).filter(item->item.getUser().getId().equals(userId)).orElseThrow(()->new ResourceNotFoundException("Notificação",notificationId));
+        notification.setRead(false);return NotificationResponse.from(notificationRepository.save(notification));
+    }
+    @Transactional
     public void markAllRead(UUID userId) {
         var unread = notificationRepository.findByUserIdAndReadFalseOrderByCreatedAtDesc(userId);
         unread.forEach(notification -> notification.setRead(true));

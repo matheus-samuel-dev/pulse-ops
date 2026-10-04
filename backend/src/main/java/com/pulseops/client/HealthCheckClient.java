@@ -9,4 +9,5 @@ import com.pulseops.dto.monitoring.HealthProbeResult;
 public interface HealthCheckClient {
 
     HealthProbeResult probe(MonitoredSystem monitoredSystem);
+    default HealthProbeResult probe(MonitoredSystem system,String bearerToken){return probe(system);}
 }

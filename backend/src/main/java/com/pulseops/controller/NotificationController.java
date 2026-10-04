@@ -50,6 +50,8 @@ public class NotificationController {
         return notificationService.markRead(principal.id(), id);
     }
 
+    @PatchMapping("/{id}/unread")
+    public NotificationResponse markUnread(@AuthenticationPrincipal PulseOpsPrincipal principal,@PathVariable UUID id){return notificationService.markUnread(principal.id(),id);}
     @PatchMapping("/read-all")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void markAllRead(@AuthenticationPrincipal PulseOpsPrincipal principal) {

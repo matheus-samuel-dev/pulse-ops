@@ -6,7 +6,7 @@ import type { SystemStatus } from '../../types/api';
 import { integrationIdentity, integrationLabels } from './integrationPresentation';
 
 const systemStatuses: Record<IntegrationStatus, SystemStatus> = {
-  ONLINE: 'OPERATIONAL', ATTENTION: 'DEGRADED', OFFLINE: 'DOWN', UNKNOWN: 'UNKNOWN',
+  ONLINE: 'OPERATIONAL', ATTENTION: 'DEGRADED', OFFLINE: 'DOWN', UNKNOWN: 'UNKNOWN', NOT_CONFIGURED: 'UNKNOWN',
 };
 
 export function IntegrationStatusBadge({ integration }: { integration: Integration }) {
@@ -31,7 +31,7 @@ export function IntegrationHealth({ integration }: { integration: Integration })
   return <Box minWidth={70}>
     <Typography variant="body2" fontWeight={650}>{integration.healthPercent === null ? '—' : formatPercent(integration.healthPercent)}</Typography>
     {integration.healthPercent !== null && <LinearProgress variant="determinate" value={integration.healthPercent}
-      aria-label={`Taxa de sucesso dos checks de ${integration.name} nas últimas 24 horas`}
+      aria-label={`Taxa de sucesso das verificações de ${integration.name} nas últimas 24 horas`}
       sx={{ height: 4, borderRadius: 2, mt: 0.6, maxWidth: 100 }} />}
   </Box>;
 }

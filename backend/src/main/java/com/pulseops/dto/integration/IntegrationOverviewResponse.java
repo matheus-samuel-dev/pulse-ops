@@ -7,5 +7,5 @@ public record IntegrationOverviewResponse(
         List<IntegrationResponse> integrations, Summary summary, boolean readOnly,
         OffsetDateTime generatedAt, String reportingTimezone
 ) {
-    public record Summary(long connected, long operational, long withIncidents, long eventsToday) { }
+    public record Summary(long connected, long operational, long withErrors, long eventsToday) { }
 }

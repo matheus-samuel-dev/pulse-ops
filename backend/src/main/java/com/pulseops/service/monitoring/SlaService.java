@@ -60,21 +60,17 @@ public class SlaService {
     }
 
     public SlaMetrics evaluate(BigDecimal targetAvailability, AvailabilityMetrics availability) {
-        Objects.requireNonNull(targetAvailability, "targetAvailability is required");
-        Objects.requireNonNull(availability, "availability is required");
+        Objects.requireNonNull(targetAvailability, "targetAvailability é obrigatório");
+        Objects.requireNonNull(availability, "availability é obrigatório");
         if (targetAvailability.compareTo(BigDecimal.ZERO) < 0
                 || targetAvailability.compareTo(BigDecimal.valueOf(100)) > 0) {
-            throw new IllegalArgumentException("SLA target must be between 0 and 100");
+            throw new IllegalArgumentException("SLA target deve estar entre 0 e 100");
         }
 
         BigDecimal target = targetAvailability.setScale(SCALE, RoundingMode.HALF_UP);
+        if (availability.eligibleChecks() == 0 || availability.availabilityPercentage() == null) return new SlaMetrics(availability.period(), null, target, false, null, SlaStatus.NO_DATA, availability.eligibleChecks());
         BigDecimal current = availability.availabilityPercentage().setScale(SCALE, RoundingMode.HALF_UP);
         BigDecimal difference = current.subtract(target).setScale(SCALE, RoundingMode.HALF_UP);
-        if (availability.totalChecks() == 0) {
-            return new SlaMetrics(
-                    availability.period(), current, target, false, difference,
-                    SlaStatus.NO_DATA, 0);
-        }
 
         boolean met = difference.signum() >= 0;
         SlaStatus status;
@@ -87,6 +83,7 @@ public class SlaService {
         }
         return new SlaMetrics(
                 availability.period(), current, target, met, difference,
-                status, availability.totalChecks());
+                status, availability.eligibleChecks());
     }
 }
+

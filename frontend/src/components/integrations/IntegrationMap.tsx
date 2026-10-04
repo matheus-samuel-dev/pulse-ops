@@ -6,6 +6,7 @@ import { integrationColors, integrationLabels } from './integrationPresentation'
 import { IntegrationIcon } from './IntegrationPrimitives';
 
 const positions: Record<string, [number, number]> = {
+  'nexus-flow': [3, 2],
   'arena-predict': [1, 1], 'ai-web-auditor': [2, 1], playspace: [3, 1],
   logitrack: [1, 3], hospital: [2, 3], helpdesk: [3, 3],
 };

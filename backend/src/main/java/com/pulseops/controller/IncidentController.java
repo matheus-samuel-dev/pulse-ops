@@ -41,9 +41,11 @@ public class IncidentController {
     public List<IncidentResponse> findAll(
             @RequestParam(required = false) UUID systemId,
             @RequestParam(required = false) IncidentStatus status,
-            @RequestParam(required = false) IncidentSeverity severity
+            @RequestParam(required = false) IncidentSeverity severity,
+            @RequestParam(required=false) String period,
+            @RequestParam(required=false) com.pulseops.domain.system.Environment environment
     ) {
-        return queryService.incidents(systemId, status, severity);
+        return period==null && environment==null ? queryService.incidents(systemId,status,severity) : queryService.incidents(systemId,status,severity,period==null?"30d":period,environment);
     }
 
     @PostMapping
@@ -51,6 +53,12 @@ public class IncidentController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DEVELOPER')")
     public IncidentResponse create(@Valid @RequestBody CreateIncidentRequest request) {
         return IncidentResponse.from(incidentService.create(request.systemId(), request.toCommand()));
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DEVELOPER')")
+    public IncidentResponse update(@PathVariable UUID id, @Valid @RequestBody com.pulseops.dto.incident.UpdateIncidentRequest request) {
+        return IncidentResponse.from(incidentService.update(id, request));
     }
 
     @PatchMapping("/{id}/investigating")

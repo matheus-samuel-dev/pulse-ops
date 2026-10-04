@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@org.springframework.validation.annotation.Validated
 @RestController
 @RequestMapping("/api/reports")
 @SecurityRequirement(name = "bearerAuth")
@@ -25,8 +26,10 @@ public class ReportController {
     @GetMapping("/operational")
     public OperationalReportResponse operational(
             @RequestParam(defaultValue = "7d") String period,
-            @RequestParam(required = false) Environment environment
+            @RequestParam(required = false) Environment environment,
+            @RequestParam(required=false) java.util.UUID systemId,
+            @RequestParam(defaultValue="0") @jakarta.validation.constraints.Min(0) int page
     ) {
-        return reportService.generate(period, environment);
+        return reportService.generate(period, environment,systemId,page);
     }
 }

@@ -14,6 +14,6 @@ export const hospitalFixture: Integration = { ...auditorFixture, id: 'hospital',
   lastReportAt: null, responseTimeMs: null, publicUrl: null };
 export const overviewFixture: IntegrationOverview = {
   integrations: [auditorFixture, helpdeskFixture, hospitalFixture],
-  summary: { connected: 2, operational: 1, withIncidents: 1, eventsToday: 7 },
+  summary: { connected: 2, operational: 1, withErrors: 1, eventsToday: 7 },
   readOnly: false, generatedAt: '2026-09-10T14:00:00Z', reportingTimezone: 'America/Sao_Paulo',
 };

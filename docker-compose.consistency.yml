@@ -1,0 +1,7 @@
+# Apply after the deterministic manual suite. Exclusive controlled test environment.
+services:
+  backend:
+    environment:
+      MONITORING_ENABLED: "true"
+      MONITORING_INTERVAL_MS: "1000"
+      MONITORING_INITIAL_DELAY_MS: "1000"

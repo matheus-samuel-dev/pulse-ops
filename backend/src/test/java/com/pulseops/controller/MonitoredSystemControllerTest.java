@@ -148,9 +148,9 @@ class MonitoredSystemControllerTest {
 
     @Test
     @DisplayName("POST /api/systems returns 403 JSON for a developer")
-    void shouldForbidCreationForDeveloper() throws Exception {
+    void shouldForbidCreationForViewer() throws Exception {
         mockMvc.perform(post("/api/systems")
-                        .with(user("developer@pulseops.dev").roles("DEVELOPER"))
+                        .with(user("developer@pulseops.dev").roles("VIEWER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
                 .andExpect(status().isForbidden())
@@ -207,7 +207,7 @@ class MonitoredSystemControllerTest {
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.message")
-                        .value("Monitored system not found: " + SYSTEM_ID))
+                        .value("Sistema não encontrado: " + SYSTEM_ID))
                 .andExpect(jsonPath("$.path").value("/api/systems/" + SYSTEM_ID));
     }
 
@@ -259,9 +259,9 @@ class MonitoredSystemControllerTest {
 
     @Test
     @DisplayName("DELETE /api/systems/{id} returns 403 for a developer")
-    void shouldForbidDeleteForDeveloper() throws Exception {
+    void shouldForbidDeleteForViewer() throws Exception {
         mockMvc.perform(delete("/api/systems/{id}", SYSTEM_ID)
-                        .with(user("developer@pulseops.dev").roles("DEVELOPER")))
+                        .with(user("developer@pulseops.dev").roles("VIEWER")))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.error").value("Forbidden"))

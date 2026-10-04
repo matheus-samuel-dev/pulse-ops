@@ -4,5 +4,7 @@ public enum SystemStatus {
     OPERATIONAL,
     DEGRADED,
     DOWN,
-    UNKNOWN
+    UNKNOWN,
+    MAINTENANCE,
+    CONFIGURATION_REQUIRED
 }

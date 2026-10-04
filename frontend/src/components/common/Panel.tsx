@@ -7,6 +7,7 @@ export function Panel({ sx, ...props }: PaperProps) {
       {...props}
       sx={[
         (theme) => ({
+          minWidth: 0,
           borderColor: 'divider',
           borderRadius: 3,
           backgroundColor: theme.palette.background.paper,

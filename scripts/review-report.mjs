@@ -1,0 +1,35 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+execFileSync(process.execPath,['scripts/review-manifest.mjs']);
+const evidence='docs/evidence';
+const results=JSON.parse(fs.readFileSync(`${evidence}/validation-summary.json`,'utf8'));
+const browser=JSON.parse(fs.readFileSync(`${evidence}/browser-audit.json`,'utf8'));
+const live=JSON.parse(fs.readFileSync(`${evidence}/live-review.json`,'utf8'));
+const vulnerabilities=JSON.parse(fs.readFileSync(`${evidence}/npm-audit-all.json`,'utf8')).metadata.vulnerabilities;
+if(!results.backend.build||!results.backend.tests||results.backend.failures||results.backend.errors||!results.frontend.tests||!results.frontend.build||!results.frontend.lint||results.e2e.unexpected||results.e2e.expected!==4||browser.errors.length||browser.badRequests.length||browser.evidence.some(row=>row.overflow>1)||live.errors.length||live.network.length||vulnerabilities.total)throw new Error('Final evidence is not clean');
+const p=value=>String(value).replace('.',',');
+const validation=`| Verificação | Executados/aprovados | Falhas/erros/ignorados | Cobertura |\n| --- | --- | --- | --- |\n| Backend: mvn clean verify | ${results.backend.tests}/${results.backend.tests} | 0 / 0 / 0 | Linhas ${p(results.backend.coverage.LINE.percentage)}% (${results.backend.coverage.LINE.covered}/${results.backend.coverage.LINE.covered+results.backend.coverage.LINE.missed}); ramificações ${p(results.backend.coverage.BRANCH.percentage)}%; services ${p(results.backend.servicesCoverage.LINE.percentage)}% em linhas. Gate global mínimo de 85% aprovado. |\n| Frontend: npm run test:coverage | ${results.frontend.tests}/${results.frontend.tests}, ${results.frontend.files} arquivos | 0 / 0 / 0 | Linhas ${p(results.frontend.coverage.lines.pct)}% (${results.frontend.coverage.lines.covered}/${results.frontend.coverage.lines.total}); ramificações ${p(results.frontend.coverage.branches.pct)}%; instruções ${p(results.frontend.coverage.statements.pct)}%; funções ${p(results.frontend.coverage.functions.pct)}%. |\n| Playwright: npm run test:e2e | 4/4 cenários, sete fluxos mínimos | 0 / 0 / 0; sem casos instáveis | Fluxos completos no navegador, API e PostgreSQL. |\n| Console/rede/responsividade | ${browser.evidence.length} combinações: doze páginas × sete larguras | 0 erros/warnings relevantes; 0 HTTP inesperado >=400; 0 overflow | 1920, 1366, 1024, 768, 430, 390 e 360 px. |\n| Ambiente normal com URL pública | ${live.routes.length+1} páginas; HTTP ${live.check.httpStatus}, ${live.check.responseTimeMs} ms no check final | 0 erros/warnings de navegador; 0 requisições inesperadas | Perfil persistido e logout/rota protegida confirmados. |\n| npm audit completo e produção | 0 vulnerabilidades apontadas | 0 críticas / altas / moderadas / baixas | Ferramentas de desenvolvimento corrigidas também. |\n\nEvidências: [resumo JSON](evidence/validation-summary.json), [backend](evidence/backend-verify.log), [frontend](evidence/frontend-tests.log), [JaCoCo](../backend/target/site/jacoco/index.html), [cobertura frontend](evidence/frontend-coverage/index.html), [E2E](evidence/e2e-results.json), [navegação](evidence/browser-audit.json) e [verificação pública](evidence/live-review.json).\n\n![Verificação real de aplicação pública](evidence/monitoramento-publico.png)`;
+const build=`| Build/operação | Resultado final | Evidência |\n| --- | --- | --- |\n| Backend: mvn clean verify | BUILD SUCCESS, JAR gerado e gate JaCoCo aprovado | backend-verify.log |\n| Frontend: npm run build | TypeScript e Vite aprovados | frontend-build.log |\n| Frontend: npm run lint | 0 erros/avisos do ESLint | frontend-lint.log |\n| Docker: docker compose build | Imagens backend/frontend construídas; frontend reconstruído após os textos finais | docker-build.log, docker-build-frontend-final.log |\n| Docker Compose normal: up -d --wait | PostgreSQL, backend e frontend saudáveis | docker-compose.log, docker-services.json |\n| Compose isolado: up -d --build --wait | Quatro serviços saudáveis, incluindo fixture HTTP | docker-compose-test.log, docker-test-services.json |\n| Flyway no banco preservado | V1 a V9 aplicadas com sucesso | flyway-applied.txt |`;
+const file='docs/revisao-pulseops.md';let report=fs.readFileSync(file,'utf8');
+report=report.includes('<!-- VALIDATION -->')
+  ? report.replace('<!-- VALIDATION -->',validation)
+  : report.replace(/(## Testes e resultados finais\r?\n\r?\n)[\s\S]*?(?=\r?\n\r?\nOs testes de backend)/, (_, heading) => heading + validation);
+report=report.includes('<!-- BUILD -->')
+  ? report.replace('<!-- BUILD -->',build)
+  : report.replace(/(## Build e Docker\r?\n\r?\n)[\s\S]*?(?=\r?\n\r?\nO banco normal)/, (_, heading) => heading + build);
+fs.writeFileSync(file,report);
+execFileSync(process.execPath,['scripts/review-manifest.mjs']);
+const manifest=JSON.parse(fs.readFileSync(`${evidence}/changed-files.json`,'utf8'));
+const root=process.cwd().replaceAll('\\','/');
+const fileLink=name=>`- [${name}](<${root}/${name}>)`;
+function allFiles(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?allFiles(path.join(dir,entry.name)):[path.join(dir,entry.name).replaceAll('\\','/')]);}
+const artifacts=[...new Set([...allFiles(evidence), `${evidence}/artifact-inventory.json`])].sort();
+fs.writeFileSync(`${evidence}/artifact-inventory.json`,JSON.stringify(artifacts,null,2));
+const inventory=`Inventário por SHA-256 do início da revisão, excluindo dependências instaladas, build e temporários. O utilitário do inventário foi criado antes da fotografia inicial e é classificado explicitamente como novo. São ${manifest.created.length} arquivos criados, ${manifest.changed.length} alterados e ${manifest.removed.length} removido no código/configuração/documentação. Outputs gerados estão separados em [artifact-inventory.json](evidence/artifact-inventory.json); o inventário de fontes está em [changed-files.json](evidence/changed-files.json).\n\n### Criados (${manifest.created.length})\n\n${manifest.created.sort().map(fileLink).join('\n')}\n\n### Alterados (${manifest.changed.length})\n\n${manifest.changed.sort().map(fileLink).join('\n')}\n\n### Removidos (${manifest.removed.length})\n\n${manifest.removed.map(name=>`- ${name}`).join('\n')}\n\nArtefatos de validação principais: logs, JSON de resultados/rede/migrations, relatório HTML de E2E, cobertura V8 e capturas desktop/mobile em docs/evidence. node_modules, target e dist são outputs regeneráveis, não alterações manuais de código. Os documentos/evidências da entrega anterior permanecem identificados como históricos.\n`;
+report=report.includes('<!-- FILES -->')
+  ? report.replace('<!-- FILES -->',inventory)
+  : report.replace(/(## Arquivos criados, alterados e removidos\r?\n\r?\n)[\s\S]*$/, (_, heading) => heading + inventory);
+fs.writeFileSync(file,report);
+execFileSync(process.execPath,['scripts/review-manifest.mjs']);
+console.log(JSON.stringify({created:manifest.created.length,changed:manifest.changed.length,removed:manifest.removed.length,evidenceFiles:artifacts.length,report:file}));

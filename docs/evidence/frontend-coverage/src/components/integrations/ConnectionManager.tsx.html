@@ -1,0 +1,247 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for src/components/integrations/ConnectionManager.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/components/integrations</a> ConnectionManager.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/52</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/37</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/17</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/33</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Alert, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { connectionsService, type ConnectionInput } from '../../services/connectionsService';
+import { systemsService } from '../../services/systemsService';
+import { getApiErrorMessage } from '../../services/api';
+import type { MonitoredSystem } from '../../types/api';
+&nbsp;
+export function <span class="fstat-no" title="function not covered" >ConnectionManager({</span> slug, onClose, onSaved }: { slug: string; onClose: () =&gt; void; onSaved: () =&gt; void }) {
+  const [systems, setSystems<span class="cstat-no" title="statement not covered" >] = useState&lt;MonitoredSystem[]&gt;([]);</span>
+  const [input, setInput<span class="cstat-no" title="statement not covered" >] = useState&lt;ConnectionInput&gt;({ systemId: '', publicUrl: '', actionPath: slug === 'ai-web-auditor' ? '/api/audits' : '/webhook/pulseops', accessToken: '', clearToken: false, autoDispatch: false });</span>
+  const [loading, setLoading<span class="cstat-no" title="statement not covered" >] = useState(true);</span>
+  const [busy, setBusy<span class="cstat-no" title="statement not covered" >] = useState(false);</span>
+  const [credential, setCredential<span class="cstat-no" title="statement not covered" >] = useState(false);</span>
+  const [error, setError<span class="cstat-no" title="statement not covered" >] = useState&lt;string | null&gt;(null);</span>
+  const [configured, setConfigured<span class="cstat-no" title="statement not covered" >] = useState(false);</span>
+<span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+    let active = <span class="cstat-no" title="statement not covered" >true;</span>
+<span class="cstat-no" title="statement not covered" >    Promise.all([systemsService.list(), connectionsService.get(slug)]).then(<span class="fstat-no" title="function not covered" >([</span>available, config]) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >      if (!active) <span class="cstat-no" title="statement not covered" >return;</span></span>
+<span class="cstat-no" title="statement not covered" >      setSystems(available);</span>
+<span class="cstat-no" title="statement not covered" >      if (config) { <span class="cstat-no" title="statement not covered" >setInput({ ...config, publicUrl: config.publicUrl ?? '', accessToken: '', clearToken: false }); <span class="cstat-no" title="statement not covered" >s</span>etCredential(config.credentialConfigured); <span class="cstat-no" title="statement not covered" >s</span>etConfigured(true); }</span></span>
+    }).catch(<span class="fstat-no" title="function not covered" >failure =&gt; {</span> <span class="cstat-no" title="statement not covered" >if (active) <span class="cstat-no" title="statement not covered" >setError(getApiErrorMessage(failure)); }</span></span>).finally(<span class="fstat-no" title="function not covered" >() =&gt; {</span> <span class="cstat-no" title="statement not covered" >if (active) <span class="cstat-no" title="statement not covered" >setLoading(false); }</span></span>);
+<span class="cstat-no" title="statement not covered" >    return <span class="fstat-no" title="function not covered" >() =&gt; {</span> <span class="cstat-no" title="statement not covered" >active = false; }</span>;</span>
+  }, [slug]);
+  const save = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (e</span>vent: React.FormEvent) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    event.preventDefault(); <span class="cstat-no" title="statement not covered" >s</span>etBusy(true); <span class="cstat-no" title="statement not covered" >s</span>etError(null);</span>
+<span class="cstat-no" title="statement not covered" >    try { <span class="cstat-no" title="statement not covered" >await connectionsService.save(slug, input); <span class="cstat-no" title="statement not covered" >o</span>nSaved(); <span class="cstat-no" title="statement not covered" >o</span>nClose(); }</span></span>
+    catch (failure) { <span class="cstat-no" title="statement not covered" >setError(getApiErrorMessage(failure)); }</span> finally { <span class="cstat-no" title="statement not covered" >setBusy(false); }</span>
+  };
+  const disconnect = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async () =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >    setBusy(true); <span class="cstat-no" title="statement not covered" >s</span>etError(null);</span>
+<span class="cstat-no" title="statement not covered" >    try { <span class="cstat-no" title="statement not covered" >await connectionsService.remove(slug); <span class="cstat-no" title="statement not covered" >o</span>nSaved(); <span class="cstat-no" title="statement not covered" >o</span>nClose(); }</span></span>
+    catch (failure) { <span class="cstat-no" title="statement not covered" >setError(getApiErrorMessage(failure)); }</span> finally { <span class="cstat-no" title="statement not covered" >setBusy(false); }</span>
+  };
+<span class="cstat-no" title="statement not covered" >  return &lt;Dialog open onClose={busy ? undefined : onClose} fullWidth maxWidth="sm" aria-labelledby="connection-title"&gt;</span>
+    &lt;DialogTitle id="connection-title"&gt;Configurar {slug === 'ai-web-auditor' ? 'AI Web Auditor' : 'Nexus Flow'}&lt;/DialogTitle&gt;
+    &lt;DialogContent dividers&gt;&lt;Stack spacing={2} component="form" id="connection-form" onSubmit={<span class="fstat-no" title="function not covered" >event =&gt; <span class="cstat-no" title="statement not covered" >v</span>oid save(event)}&gt;</span>
+      {error &amp;&amp; &lt;Alert severity="error"&gt;{error}&lt;/Alert&gt;}
+      {loading ? &lt;Typography role="status"&gt;Carregando configuração…&lt;/Typography&gt; : &lt;&gt;
+        &lt;Typography variant="body2" color="text.secondary"&gt;Cadastre o serviço remoto em Sistemas e selecione-o abaixo. A URL base e o endpoint de verificação desse sistema serão usados para testar a conexão.&lt;/Typography&gt;
+        &lt;TextField select label="Serviço da integração" required value={input.systemId} onChange={<span class="fstat-no" title="function not covered" >event =&gt; <span class="cstat-no" title="statement not covered" >s</span>etInput({ ...input, systemId: event.target.value })}&gt;</span>
+          {systems.map(<span class="fstat-no" title="function not covered" >system =&gt; <span class="cstat-no" title="statement not covered" >&lt;</span>MenuItem key={system.id} value={system.id}&gt;{system.name}&lt;/MenuItem&gt;)</span>}
+        &lt;/TextField&gt;
+        {!systems.length &amp;&amp; &lt;Alert severity="info"&gt;Cadastre primeiro o serviço remoto na página Sistemas.&lt;/Alert&gt;}
+        &lt;TextField label="Caminho da API ou webhook" required value={input.actionPath} onChange={<span class="fstat-no" title="function not covered" >event =&gt; <span class="cstat-no" title="statement not covered" >s</span>etInput({ ...input, actionPath: event.target.value })} h</span>elperText={slug === 'ai-web-auditor' ? 'Contrato do AI Web Auditor: POST /api/audits e GET /api/audits/{id}.' : 'Caminho do webhook publicado pelo seu workflow. Deve começar com /.'} /&gt;
+        &lt;TextField label="URL pública da interface" type="url" value={input.publicUrl} onChange={<span class="fstat-no" title="function not covered" >event =&gt; <span class="cstat-no" title="statement not covered" >s</span>etInput({ ...input, publicUrl: event.target.value })} h</span>elperText="Opcional. No AI Web Auditor, permite abrir /audits/{id} após a conclusão." /&gt;
+        &lt;TextField label="Token de acesso" type="password" autoComplete="new-password" value={input.accessToken} onChange={<span class="fstat-no" title="function not covered" >event =&gt; <span class="cstat-no" title="statement not covered" >s</span>etInput({ ...input, accessToken: event.target.value })} h</span>elperText={credential ? 'Credencial salva. Deixe vazio para manter; o valor nunca é devolvido pela API.' : 'Token Bearer do serviço remoto. Ele é armazenado cifrado no backend.'} /&gt;
+        {credential &amp;&amp; &lt;FormControlLabel control={&lt;Checkbox checked={input.clearToken} onChange={<span class="fstat-no" title="function not covered" >event =&gt; <span class="cstat-no" title="statement not covered" >s</span>etInput({ ...input, clearToken: event.target.checked })} /</span>&gt;} label="Remover a credencial salva" /&gt;}
+        {slug === 'nexus-flow' &amp;&amp; &lt;FormControlLabel control={&lt;Checkbox checked={input.autoDispatch} onChange={<span class="fstat-no" title="function not covered" >event =&gt; <span class="cstat-no" title="statement not covered" >s</span>etInput({ ...input, autoDispatch: event.target.checked })} /</span>&gt;} label="Enviar evento automaticamente quando um sistema ficar indisponível" /&gt;}
+      &lt;/&gt;}
+    &lt;/Stack&gt;&lt;/DialogContent&gt;
+    &lt;DialogActions sx={{ flexWrap: 'wrap' }}&gt;{configured &amp;&amp; &lt;Button color="error" disabled={busy} onClick={<span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >v</span>oid disconnect()}&gt;D</span>esconectar&lt;/Button&gt;}&lt;Button disabled={busy} onClick={onClose}&gt;Cancelar&lt;/Button&gt;&lt;Button variant="contained" form="connection-form" type="submit" disabled={busy || loading || !input.systemId}&gt;{busy ? 'Salvando…' : 'Salvar configuração'}&lt;/Button&gt;&lt;/DialogActions&gt;
+  &lt;/Dialog&gt;;
+}
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-10-03T22:46:20.468Z
+            </div>
+        <script src="../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
+    </body>
+</html>
+    

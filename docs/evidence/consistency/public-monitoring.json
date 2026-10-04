@@ -1,0 +1,109 @@
+{
+  "url": "https://matheus-samuel-dev.github.io/Portfolio/",
+  "check": {
+    "id": "2b7643ca-bc77-41f3-a16e-21df3d402809",
+    "systemId": "34574b66-f11e-4759-99f3-19e21f2c0437",
+    "checkedAt": "2026-10-04T10:00:59.940468077Z",
+    "httpStatus": 200,
+    "responseTimeMs": 309,
+    "success": true,
+    "failureType": "NONE"
+  },
+  "latestCheck": {
+    "id": "2b7643ca-bc77-41f3-a16e-21df3d402809",
+    "systemId": "34574b66-f11e-4759-99f3-19e21f2c0437",
+    "checkedAt": "2026-10-04T10:00:59.940468Z",
+    "httpStatus": 200,
+    "responseTimeMs": 309,
+    "success": true,
+    "failureType": "NONE"
+  },
+  "status": "OPERATIONAL",
+  "historyCount": 723,
+  "metrics": {
+    "period": "24h",
+    "availability": {
+      "period": {
+        "start": "2026-10-03T10:01:01.724474627Z",
+        "end": "2026-10-04T10:01:01.724474627Z"
+      },
+      "totalChecks": 723,
+      "successfulChecks": 721,
+      "failedChecks": 2,
+      "availabilityPercentage": 99.723,
+      "eligibleChecks": 723,
+      "excludedChecks": 0
+    },
+    "latency": {
+      "period": {
+        "start": "2026-10-03T10:01:01.724474627Z",
+        "end": "2026-10-04T10:01:01.724474627Z"
+      },
+      "sampleCount": 721,
+      "averageMs": 569.53,
+      "minimumMs": 73,
+      "maximumMs": 9285,
+      "p95Ms": 2027
+    },
+    "sla": {
+      "period": {
+        "start": "2026-10-03T10:01:01.724474627Z",
+        "end": "2026-10-04T10:01:01.724474627Z"
+      },
+      "currentAvailability": 99.723,
+      "targetAvailability": 99.9,
+      "targetMet": false,
+      "differencePercentagePoints": -0.177,
+      "status": "BREACHED",
+      "evaluatedChecks": 723
+    }
+  },
+  "dashboardHealth": {
+    "id": "34574b66-f11e-4759-99f3-19e21f2c0437",
+    "name": "Portfólio público",
+    "environment": "PRODUCTION",
+    "status": "OPERATIONAL",
+    "uptime": 99.723,
+    "latencyMs": 309,
+    "lastCheckedAt": "2026-10-04T10:00:59.940468Z",
+    "sparkline": [
+      4711,
+      1925,
+      1427,
+      2855,
+      3187,
+      2025,
+      2484,
+      633,
+      1100,
+      3360,
+      2042,
+      309
+    ],
+    "statusReason": "Verificação bem-sucedida",
+    "statusChangedAt": "2026-10-04T10:00:59.940468Z",
+    "active": true,
+    "totalChecks": 723
+  },
+  "reportKpis": {
+    "monitoredSystems": 1,
+    "operationalSystems": 1,
+    "degradedSystems": 0,
+    "downSystems": 0,
+    "unknownSystems": 0,
+    "totalHealthChecks": 723,
+    "successfulHealthChecks": 721,
+    "failedHealthChecks": 2,
+    "availability": 99.723,
+    "activeIncidents": 0,
+    "incidentsOpened": 0,
+    "deployments": 0,
+    "successfulDeployments": 0,
+    "totalTests": 0,
+    "passedTests": 0,
+    "failedTests": 0,
+    "skippedTests": 0
+  },
+  "errors": [],
+  "badRequests": []
+}

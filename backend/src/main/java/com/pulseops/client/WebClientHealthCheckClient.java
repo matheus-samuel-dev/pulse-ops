@@ -34,12 +34,16 @@ public class WebClientHealthCheckClient implements HealthCheckClient {
 
     @Override
     public HealthProbeResult probe(MonitoredSystem monitoredSystem) {
+        return probe(monitoredSystem,null);
+    }
+    @Override
+    public HealthProbeResult probe(MonitoredSystem monitoredSystem,String bearerToken) {
         long startedAt = System.nanoTime();
         try {
             Integer status = Mono.fromCallable(() -> monitoredUrlPolicy.validate(
                             monitoredSystem.getBaseUrl(), monitoredSystem.getHealthEndpoint()))
                     .subscribeOn(Schedulers.boundedElastic())
-                    .flatMap(this::request)
+                    .flatMap(target -> request(target,bearerToken))
                     .timeout(Duration.ofMillis(monitoredSystem.getTimeoutMs()))
                     .block();
             long elapsed = elapsedMillis(startedAt);
@@ -63,11 +67,11 @@ public class WebClientHealthCheckClient implements HealthCheckClient {
         return monitoredUrlPolicy.validate(system.getBaseUrl(), system.getHealthEndpoint()).targetUri();
     }
 
-    private Mono<Integer> request(ValidatedMonitoredUrl target) {
+    private Mono<Integer> request(ValidatedMonitoredUrl target,String bearerToken) {
         PinnedAddressResolverGroup resolver = new PinnedAddressResolverGroup(target);
         HttpClient transport = HttpClient.newConnection().resolver(resolver).followRedirect(false);
         return builder.clone().clientConnector(new ReactorClientHttpConnector(transport)).build()
-                .get().uri(target.targetUri())
+                .get().uri(target.targetUri()).headers(headers -> {if(bearerToken!=null&&!bearerToken.isBlank())headers.setBearerAuth(bearerToken);})
                 .exchangeToMono(response -> Mono.just(response.statusCode().value()))
                 .doFinally(signal -> resolver.close());
     }

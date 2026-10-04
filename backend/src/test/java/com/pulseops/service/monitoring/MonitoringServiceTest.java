@@ -109,7 +109,7 @@ class MonitoringServiceTest {
 
         assertThatThrownBy(() -> monitoringService.checkSystem(systemId))
                 .isInstanceOf(BusinessRuleException.class)
-                .hasMessage("Inactive systems cannot be monitored");
+                .hasMessage("Sistemas inativos não podem ser monitorados");
 
         verifyNoInteractions(healthCheckClient, persistenceService);
     }

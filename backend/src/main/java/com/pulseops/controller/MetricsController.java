@@ -29,6 +29,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Metrics", description = "Disponibilidade, latência, SLA e histórico")
 public class MetricsController {
 
+    @org.springframework.beans.factory.annotation.Autowired private java.time.Clock clock;
+    @org.springframework.beans.factory.annotation.Autowired private com.pulseops.service.DashboardService dashboard;
     private final AvailabilityService availabilityService;
     private final LatencyMetricsService latencyService;
     private final SlaService slaService;
@@ -46,41 +48,30 @@ public class MetricsController {
         this.queryService = queryService;
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly=true,isolation=org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     @GetMapping("/metrics")
     public SystemMetricsResponse metrics(
             @PathVariable UUID systemId,
             @RequestParam(defaultValue = "24h") String period
     ) {
-        AvailabilityMetrics availability;
-        LatencyMetrics latency;
-        SlaMetrics sla;
-        switch (period.toLowerCase()) {
-            case "7d" -> {
-                availability = availabilityService.last7Days(systemId);
-                latency = latencyService.last7Days(systemId);
-                sla = slaService.last7Days(systemId);
-            }
-            case "30d" -> {
-                availability = availabilityService.last30Days(systemId);
-                latency = latencyService.last30Days(systemId);
-                sla = slaService.last30Days(systemId);
-            }
-            default -> {
-                period = "24h";
-                availability = availabilityService.last24Hours(systemId);
-                latency = latencyService.last24Hours(systemId);
-                sla = slaService.last24Hours(systemId);
-            }
-        }
+        period=com.pulseops.service.OperationalReadModel.normalize(period);
+        var end=java.time.OffsetDateTime.now(clock);
+        var range=new com.pulseops.dto.common.TimeRange(end.minusDays(period.equals("7d")?7:period.equals("30d")?30:1),end);
+        AvailabilityMetrics availability=availabilityService.calculate(systemId,range);
+        LatencyMetrics latency=latencyService.calculate(systemId,range);
+        SlaMetrics sla=slaService.calculate(systemId,range);
         return new SystemMetricsResponse(period, availability, latency, sla);
     }
 
+    @GetMapping("/latency")
+    public java.util.List<com.pulseops.dto.dashboard.LatencyPointResponse> latency(@PathVariable UUID systemId,@RequestParam(defaultValue="24h") String period) { return dashboard.latency(period,null,systemId); }
     @GetMapping("/checks")
     public Page<HealthCheckResponse> checks(
             @PathVariable UUID systemId,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @RequestParam(required=false) String period
     ) {
-        return queryService.healthChecks(systemId, page, size);
+        return period==null?queryService.healthChecks(systemId,page,size):queryService.healthChecks(systemId,page,size,period);
     }
 }

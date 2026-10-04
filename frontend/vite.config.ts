@@ -31,8 +31,19 @@ export default defineConfig({
     port: 4173,
   },
   test: {
+    include: ['src/**/*.test.{ts,tsx}'],
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     restoreMocks: true,
+    maxWorkers: 2,
+    testTimeout: 15_000,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx', 'src/types/**', 'src/vite-env.d.ts'],
+      reporter: ['text', 'json-summary', 'html'],
+      reportsDirectory: '../docs/evidence/consistency/frontend-coverage',
+    },
   },
 });
+

@@ -39,8 +39,8 @@ public class QualityController {
     }
 
     @GetMapping("/overview")
-    public QualityOverviewResponse overview() {
-        return qualityService.getOverview();
+    public QualityOverviewResponse overview(@RequestParam(defaultValue="30d") String period,@RequestParam(required=false) com.pulseops.domain.system.Environment environment,@RequestParam(required=false) UUID systemId) {
+        return qualityService.getOverview(period,environment,systemId);
     }
 
     @GetMapping("/history")

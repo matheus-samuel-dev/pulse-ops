@@ -100,11 +100,11 @@ class SlaServiceTest {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> slaService.evaluate(
                         new BigDecimal("-0.001"), availability(1, "100.000")))
-                .withMessageContaining("between 0 and 100");
+                .withMessageContaining("entre 0 e 100");
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> slaService.evaluate(
                         new BigDecimal("100.001"), availability(1, "100.000")))
-                .withMessageContaining("between 0 and 100");
+                .withMessageContaining("entre 0 e 100");
     }
 
     @Test

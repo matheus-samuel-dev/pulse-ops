@@ -1,6 +1,5 @@
 import {
-  Avatar,
-  Badge,
+  Avatar, Badge,
   Box,
   Chip,
   Divider,
@@ -10,6 +9,9 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
+  ButtonBase,
   Stack,
   Toolbar,
   Tooltip,
@@ -32,12 +34,13 @@ import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
-import { useState, type ComponentType } from 'react';
+import { useState, useEffect, type ComponentType } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import type { SvgIconProps } from '@mui/material';
 import { PulseOpsLogo } from '../components/common/PulseOpsLogo';
 import { useAuth } from '../auth/AuthContext';
 import { useColorMode } from '../theme/PulseOpsThemeProvider';
+import { notificationsService } from '../services/notificationsService';
 import { isDemoMode } from '../config/demo';
 
 const roleLabels = { ADMIN: 'Administrador', DEVELOPER: 'Desenvolvedor', VIEWER: 'Visualizador' } as const;
@@ -52,15 +55,15 @@ interface NavigationItem {
 }
 
 const navigation: NavigationItem[] = [
-  { label: 'Dashboard', path: '/', icon: DashboardRoundedIcon, available: true },
+  { label: 'Visão geral', path: '/', icon: DashboardRoundedIcon, available: true },
   { label: 'Sistemas', path: '/sistemas', icon: DnsRoundedIcon, available: true },
   { label: 'Incidentes', path: '/incidentes', icon: ReportProblemRoundedIcon, available: true },
-  { label: 'Deploys', path: '/deploys', icon: RocketLaunchRoundedIcon, available: true },
+  { label: 'Implantações', path: '/deploys', icon: RocketLaunchRoundedIcon, available: true },
   { label: 'Qualidade', path: '/qualidade', icon: ScienceRoundedIcon, available: true },
   { label: 'Integrações', path: '/integracoes', icon: HubRoundedIcon, available: true },
   { label: 'Alertas', path: '/alertas', icon: NotificationsNoneRoundedIcon, available: true },
   { label: 'Relatórios', path: '/relatorios', icon: AssessmentRoundedIcon, available: true },
-  { label: 'Auditoria', path: '/auditoria', icon: HistoryRoundedIcon, available: true },
+  { label: 'Trilha de auditoria', path: '/auditoria', icon: HistoryRoundedIcon, available: true },
   { label: 'Configurações', path: '/configuracoes', icon: SettingsRoundedIcon, available: true },
 ];
 
@@ -68,15 +71,28 @@ export function AppShell() {
   const theme = useTheme();
   const desktop = useMediaQuery(theme.breakpoints.up('lg'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { mode, toggleColorMode } = useColorMode();
 
-  const logout = () => {
-    signOut();
-    navigate('/login', { replace: true });
+  const [unread, setUnread] = useState<number | null>(null);
+  useEffect(() => {
+    let active=true;
+    const refresh=() => { notificationsService.list(0,1).then(value => { if(active) setUnread(value.unreadCount); }).catch(() => { if(active) setUnread(null); }); };
+    refresh();
+    window.addEventListener("pulseops:alerts", refresh);
+    return () => { active=false; window.removeEventListener("pulseops:alerts",refresh); };
+  }, [user?.id, location.pathname]);
+  const logout = async () => {
+    setLoggingOut(true);
+    try { await signOut(); } catch { /* A sessão local é removida mesmo se a rede falhar. */ }
+    finally { navigate('/login', { replace: true }); setLoggingOut(false); setAccountAnchor(null); }
   };
+  const openAccount = (event: React.MouseEvent<HTMLElement>) => setAccountAnchor(event.currentTarget);
+  const accountMenuProps = { 'aria-haspopup': 'menu' as const, 'aria-expanded': Boolean(accountAnchor), 'aria-controls': accountAnchor ? 'account-menu' : undefined };
 
   const drawer = (
     <Box height="100%" display="flex" flexDirection="column" bgcolor="background.paper">
@@ -86,7 +102,7 @@ export function AppShell() {
       <Divider />
       <Box px={1.25} pt={2}>
         <Typography px={1.2} mb={0.75} variant="caption" color="text.secondary" fontWeight={650} textTransform="uppercase">
-          Workspace
+          Área de trabalho
         </Typography>
         <List disablePadding aria-label="Navegação principal">
           {navigation.map((item) => {
@@ -133,7 +149,7 @@ export function AppShell() {
       </Box>
       <Box mt="auto" px={1.25} pb={1.5}>
         <Divider sx={{ mb: 1.2 }} />
-        <Stack direction="row" alignItems="center" px={0.6} py={0.7} spacing={1}>
+        <Stack component={ButtonBase} onClick={openAccount} {...accountMenuProps} aria-label="Abrir menu da conta na barra lateral" direction="row" alignItems="center" px={0.6} py={0.7} spacing={1} sx={{ width: '100%', textAlign: 'left', borderRadius: 2 }}>
           <Avatar sx={{ width: 33, height: 33, bgcolor: 'primary.dark', fontSize: '0.75rem', fontWeight: 700 }}>
             {user?.name.split(' ').slice(0, 2).map((part) => part[0]).join('').toUpperCase()}
           </Avatar>
@@ -150,7 +166,7 @@ export function AppShell() {
             </IconButton>
           </Tooltip>
           <Tooltip title="Sair">
-            <IconButton size="small" aria-label="Sair da plataforma" onClick={logout} sx={{ ml: 'auto' }}>
+            <IconButton size="small" aria-label="Sair da plataforma" onClick={() => void logout()} disabled={loggingOut} sx={{ ml: 'auto' }}>
               <LogoutRoundedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -218,15 +234,16 @@ export function AppShell() {
           )}
           <Tooltip title="Central de alertas">
             <IconButton aria-label="Abrir alertas" onClick={() => navigate('/alertas')}>
-              <Badge color="error" variant="dot" overlap="circular">
-                <NotificationsNoneRoundedIcon fontSize="small" />
-              </Badge>
+              
+                <Badge badgeContent={unread} color="error"><NotificationsNoneRoundedIcon fontSize="small" /></Badge>
+              
             </IconButton>
           </Tooltip>
-          <Avatar sx={{ ml: 1, width: 30, height: 30, bgcolor: 'primary.dark', fontSize: '0.68rem', fontWeight: 700 }}>
+          <IconButton onClick={openAccount} {...accountMenuProps} aria-label="Abrir menu da conta"><Avatar sx={{ ml: 1, width: 30, height: 30, bgcolor: 'primary.dark', fontSize: '0.68rem', fontWeight: 700 }}>
             {user?.name.charAt(0).toUpperCase()}
-          </Avatar>
+          </Avatar></IconButton>
         </Toolbar>
+        <Menu id="account-menu" anchorEl={accountAnchor} open={Boolean(accountAnchor)} onClose={() => setAccountAnchor(null)}><MenuItem onClick={() => { setAccountAnchor(null); setMobileOpen(false); navigate('/perfil'); }}>Meu perfil</MenuItem><MenuItem onClick={() => { setAccountAnchor(null); setMobileOpen(false); navigate('/configuracoes'); }}>Configurações</MenuItem><Divider /><MenuItem onClick={() => void logout()} disabled={loggingOut}>{loggingOut ? 'Saindo…' : 'Sair'}</MenuItem></Menu>
         <Outlet />
       </Box>
     </Box>

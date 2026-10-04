@@ -67,7 +67,7 @@ class QualityControllerTest {
     @DisplayName("GET /api/quality/overview returns the aggregate and per-system quality for a viewer")
     void shouldReturnOverviewForViewer() throws Exception {
         QualityReportResponse systemReport = report();
-        when(qualityService.getOverview()).thenReturn(new QualityOverviewResponse(
+        when(qualityService.getOverview("30d",null,null)).thenReturn(new QualityOverviewResponse(
                 2, 1, 1,
                 324, 323, 1, 0,
                 new BigDecimal("99.69"),
@@ -91,7 +91,7 @@ class QualityControllerTest {
                 .andExpect(jsonPath("$.systems[0].systemName").value("PlaySpace"))
                 .andExpect(jsonPath("$.systems[0].generatedAt").value("2026-08-27T12:00:00Z"));
 
-        verify(qualityService).getOverview();
+        verify(qualityService).getOverview("30d",null,null);
     }
 
     @Test
@@ -138,7 +138,7 @@ class QualityControllerTest {
                 .andExpect(jsonPath("$.error").value("Unauthorized"))
                 .andExpect(jsonPath("$.path").value("/api/quality/overview"));
 
-        verify(qualityService, never()).getOverview();
+        verify(qualityService, never()).getOverview("30d",null,null);
     }
 
     private QualityReportResponse report() {
@@ -156,6 +156,6 @@ class QualityControllerTest {
                 new BigDecimal("92.40"),
                 new BigDecimal("87.10"),
                 new BigDecimal("90.28"),
-                QualityClassification.GOOD);
+                QualityClassification.GOOD, "API_IMPORT");
     }
 }

@@ -9,8 +9,8 @@ export const integerFormatter = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 0,
 });
 
-export function formatPercent(value: number): string {
-  return `${percentFormatter.format(value)}%`;
+export function formatPercent(value: number | null | undefined): string {
+  return value == null || !Number.isFinite(value) ? 'Sem dados' : `${percentFormatter.format(value)}%`;
 }
 
 export function formatLatency(value: number | null): string {
@@ -32,13 +32,15 @@ export function formatRelativeTime(value: string | null): string {
 
 export const statusLabels: Record<SystemStatus, string> = {
   OPERATIONAL: 'Operacional',
-  DEGRADED: 'Atenção',
+  DEGRADED: 'Degradado',
   DOWN: 'Indisponível',
-  UNKNOWN: 'Sem dados',
+  UNKNOWN: 'Aguardando primeira verificação',
+  MAINTENANCE: 'Em manutenção',
+  CONFIGURATION_REQUIRED: 'Configuração inválida',
 };
 
 export const environmentLabels: Record<Environment, string> = {
   PRODUCTION: 'Produção',
-  STAGING: 'Staging',
+  STAGING: 'Homologação',
   DEVELOPMENT: 'Desenvolvimento',
 };

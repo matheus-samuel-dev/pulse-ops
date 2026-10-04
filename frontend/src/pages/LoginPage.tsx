@@ -15,7 +15,6 @@ import {
   IconButton,
   InputAdornment,
   Link,
-  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -23,10 +22,11 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '../auth/AuthContext';
 import { PulseOpsLogo } from '../components/common/PulseOpsLogo';
+import { isDemoMode } from '../config/demo';
 import { getApiErrorMessage } from '../services/api';
 
 const demoCredentials = { email: 'admin@pulseops.dev', password: 'PulseOps@2026' };
@@ -45,7 +45,7 @@ export function LoginPage() {
   const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [recoveryNoticeOpen, setRecoveryNoticeOpen] = useState(false);
+  const [remember, setRemember] = useState(false);
   const {
     control,
     handleSubmit,
@@ -58,7 +58,7 @@ export function LoginPage() {
   const submit = async (values: LoginForm) => {
     setError(null);
     try {
-      await signIn(values);
+      await signIn(values, remember);
       const destination = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/';
       navigate(destination, { replace: true });
     } catch (requestError) {
@@ -107,7 +107,7 @@ export function LoginPage() {
             Operações, confiabilidade e qualidade de software reunidas em uma visão clara — antes que ruídos se tornem incidentes.
           </Typography>
           <Stack spacing={1.4} mt={4}>
-            {['Telemetria operacional em tempo real', 'SLA, incidentes e deploys correlacionados', 'Qualidade comprovada por testes automatizados'].map((item) => (
+            {['Verificações HTTP reais e histórico persistido', 'SLA, incidentes e deploys correlacionados', 'Qualidade comprovada por testes automatizados'].map((item) => (
               <Stack key={item} direction="row" spacing={1.1} alignItems="center">
                 <CheckCircleRoundedIcon sx={{ color: 'success.main', fontSize: 18 }} />
                 <Typography variant="body2" color="text.secondary">{item}</Typography>
@@ -116,7 +116,7 @@ export function LoginPage() {
           </Stack>
         </Box>
         <Typography variant="caption" color="text.secondary" position="relative">
-          PulseOps · Observability & Software Quality Platform
+          PulseOps · Central de operações e observabilidade
         </Typography>
       </Box>
 
@@ -185,18 +185,10 @@ export function LoginPage() {
               />
               <Stack direction="row" alignItems="center" justifyContent="space-between">
                 <FormControlLabel
-                  control={<Checkbox size="small" defaultChecked />}
+                  control={<Checkbox size="small" checked={remember} onChange={(_, checked) => setRemember(checked)} />}
                   label={<Typography variant="body2" color="text.secondary">Manter conectado</Typography>}
                 />
-                <Link
-                  component="button"
-                  type="button"
-                  variant="body2"
-                  underline="hover"
-                  onClick={() => setRecoveryNoticeOpen(true)}
-                >
-                  Esqueceu a senha?
-                </Link>
+                <Link component={RouterLink} to="/cadastro" variant="body2">Criar conta</Link>
               </Stack>
               <Button type="submit" variant="contained" size="large" disabled={isSubmitting} fullWidth sx={{ height: 47 }}>
                 {isSubmitting ? <CircularProgress color="inherit" size={21} aria-label="Autenticando" /> : 'Entrar no PulseOps'}
@@ -204,7 +196,7 @@ export function LoginPage() {
             </Stack>
           </Box>
 
-          <Box mt={3.2} p={2} border="1px solid" borderColor="divider" borderRadius={2.5} bgcolor={alpha(theme.palette.primary.main, 0.035)}>
+          {isDemoMode && <Box mt={3.2} p={2} border="1px solid" borderColor="divider" borderRadius={2.5} bgcolor={alpha(theme.palette.primary.main, 0.035)}>
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={2}>
               <Box minWidth={0}>
                 <Typography variant="caption" fontWeight={700} color="primary.light">ACESSO DEMONSTRATIVO</Typography>
@@ -213,22 +205,12 @@ export function LoginPage() {
               </Box>
               <Button size="small" variant="text" onClick={fillDemo}>Preencher</Button>
             </Stack>
-          </Box>
+          </Box>}
           <Typography variant="caption" display="block" textAlign="center" color="text.secondary" mt={3}>
-            Ambiente protegido por JWT · TLS preparado · RBAC ativo
+            Monitoramento de aplicações, serviços e APIs
           </Typography>
         </Box>
       </Box>
-      <Snackbar
-        open={recoveryNoticeOpen}
-        autoHideDuration={5000}
-        onClose={() => setRecoveryNoticeOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="info" variant="filled" onClose={() => setRecoveryNoticeOpen(false)}>
-          Recuperação de senha não está habilitada no ambiente demonstrativo.
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

@@ -29,17 +29,17 @@ export function IntegrationDetails({ id, onClose, canCheck, checking, onCheck, r
           <IntegrationMetric label="Tipo de integração">{data.type}</IntegrationMetric>
           <IntegrationMetric label="URL pública">{data.publicUrl ?? 'Não configurada'}</IntegrationMetric>
           <IntegrationMetric label="URL base">{data.baseUrl ?? 'Não configurada'}</IntegrationMetric>
-          <IntegrationMetric label="Health endpoint">{data.healthEndpoint ?? 'Não configurado'}</IntegrationMetric>
+          <IntegrationMetric label="Endpoint de verificação">{data.healthEndpoint ?? 'Não configurado'}</IntegrationMetric>
           <IntegrationMetric label="Última verificação"><IntegrationTime value={data.lastCheckedAt} /></IntegrationMetric>
-          <IntegrationMetric label="Última sincronização de dados"><IntegrationTime value={data.lastSuccessfulSyncAt} /></IntegrationMetric>
+          <IntegrationMetric label="Última comunicação da execução"><IntegrationTime value={data.lastSuccessfulSyncAt} /></IntegrationMetric>
           <IntegrationMetric label="Tempo de resposta">{formatLatency(data.responseTimeMs)}</IntegrationMetric>
           <IntegrationMetric label="Saúde / taxa de sucesso · 24h"><IntegrationHealth integration={data} /></IntegrationMetric>
           <IntegrationMetric label="Verificações · 24h">{data.checksLast24h.toLocaleString('pt-BR')}</IntegrationMetric>
           <IntegrationMetric label="Erros · 24h">{data.errorsLast24h.toLocaleString('pt-BR')}</IntegrationMetric>
           <IntegrationMetric label="Última falha"><IntegrationTime value={data.lastFailureAt} /></IntegrationMetric>
-          <IntegrationMetric label="Último relatório gerado"><IntegrationTime value={data.lastReportAt} /></IntegrationMetric>
+          <IntegrationMetric label="Último resultado recebido"><IntegrationTime value={data.lastReportAt} /></IntegrationMetric>
         </Box>
-        <Typography variant="body2" color="text.secondary" mb={2}>A saúde mede o sucesso dos checks nas últimas 24 horas, com pelo menos cinco amostras. A sincronização registra o recebimento de relatórios; verificar a conexão não sincroniza dados.</Typography>
+        <Typography variant="body2" color="text.secondary" mb={2}>A saúde usa verificações reais nas últimas 24 horas, com pelo menos cinco amostras. Execuções e resultados são consultados no serviço externo; o teste HTTP não executa auditorias ou workflows.</Typography>
         {!canCheck && <Alert severity="info" sx={{ mb: 2 }}>Teste de conexão disponível para administradores e desenvolvedores em ambientes com permissão de escrita.</Alert>}
         <Typography variant="h2" mt={3}>Eventos recentes</Typography>
         <IntegrationActivity id={id} revision={revision} />

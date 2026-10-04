@@ -28,6 +28,9 @@ public class UserService {
 
     @Transactional
     public User create(String name, String email, String rawPassword, UserRole role) {
+        if (rawPassword == null || rawPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new com.pulseops.exception.BusinessRuleException("A senha deve ter até 72 bytes em UTF-8");
+        }
         String normalizedEmail = normalizeEmail(email);
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new ConflictException("Já existe um usuário com este e-mail");

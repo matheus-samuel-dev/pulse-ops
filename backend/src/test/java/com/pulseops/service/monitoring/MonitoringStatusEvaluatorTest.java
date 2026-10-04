@@ -45,7 +45,7 @@ class MonitoringStatusEvaluatorTest {
 
             assertThat(decision.status()).isEqualTo(SystemStatus.OPERATIONAL);
             assertThat(decision.successful()).isTrue();
-            assertThat(decision.reason()).isEqualTo("Health check succeeded");
+            assertThat(decision.reason()).isEqualTo("Verificação bem-sucedida");
         }
 
         @Test
@@ -83,7 +83,7 @@ class MonitoringStatusEvaluatorTest {
 
             assertThat(decision.status()).isEqualTo(SystemStatus.DEGRADED);
             assertThat(decision.successful()).isTrue();
-            assertThat(decision.reason()).contains("2 recent failures");
+            assertThat(decision.reason()).contains("2 falhas recentes");
         }
 
         @Test
@@ -117,14 +117,14 @@ class MonitoringStatusEvaluatorTest {
         }
 
         @Test
-        void shouldBeDownImmediatelyOnServerError() {
+        void shouldDegradeFirstServerFailure() {
             MonitoringDecision decision = evaluator.evaluate(
                     system,
                     HealthProbeResult.response(503, 70),
                     List.of()
             );
 
-            assertThat(decision.status()).isEqualTo(SystemStatus.DOWN);
+            assertThat(decision.status()).isEqualTo(SystemStatus.DEGRADED);
             assertThat(decision.successful()).isFalse();
         }
 
@@ -153,14 +153,14 @@ class MonitoringStatusEvaluatorTest {
 
         @ParameterizedTest(name = "{0} should make the system down")
         @EnumSource(value = ProbeFailureType.class, names = "NONE", mode = EnumSource.Mode.EXCLUDE)
-        void shouldBeDownForEveryTransportFailure(ProbeFailureType failureType) {
+        void shouldDegradeTransportFailureOrFlagSecurityConfiguration(ProbeFailureType failureType) {
             MonitoringDecision decision = evaluator.evaluate(
                     system,
                     HealthProbeResult.failure(failureType, 2_000, "external failure"),
                     List.of(successfulCheck())
             );
 
-            assertThat(decision.status()).isEqualTo(SystemStatus.DOWN);
+            assertThat(decision.status()).isEqualTo(failureType == ProbeFailureType.SECURITY_POLICY ? SystemStatus.CONFIGURATION_REQUIRED : SystemStatus.DEGRADED);
             assertThat(decision.successful()).isFalse();
             assertThat(decision.reason()).isNotBlank();
         }
@@ -185,10 +185,10 @@ class MonitoringStatusEvaluatorTest {
         void shouldRejectNullSystemAndProbe() {
             assertThatNullPointerException()
                     .isThrownBy(() -> evaluator.evaluate(null, HealthProbeResult.response(200, 1), List.of()))
-                    .withMessage("system is required");
+                    .withMessage("system é obrigatório");
             assertThatNullPointerException()
                     .isThrownBy(() -> evaluator.evaluate(system, null, List.of()))
-                    .withMessage("probe is required");
+                    .withMessage("probe é obrigatório");
         }
 
         @Test

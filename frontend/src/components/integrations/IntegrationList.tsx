@@ -23,14 +23,14 @@ export function IntegrationList({ integrations, onDetails }: { integrations: Int
     <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.25} mb={1.5}>
       <TextField label="Buscar integração" size="small" value={query} onChange={event => setQuery(event.target.value)} sx={{ flex: 1, minWidth: 0 }}
         slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> } }} />
-      <TextField select label="Status" size="small" value={status} onChange={event => setStatus(event.target.value as IntegrationStatus | 'ALL')} sx={{ minWidth: 145 }}>
+      <TextField select label="Estado" size="small" value={status} onChange={event => setStatus(event.target.value as IntegrationStatus | 'ALL')} sx={{ minWidth: 145 }}>
         <MenuItem value="ALL">Todos</MenuItem>{Object.entries(integrationLabels).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
       </TextField>
       <TextField select label="Ordenar por" size="small" value={sort} onChange={event => setSort(event.target.value as IntegrationSort)} sx={{ minWidth: 140 }}>
         <MenuItem value="name">Nome</MenuItem><MenuItem value="sync">Última sincronização</MenuItem><MenuItem value="health">Saúde</MenuItem><MenuItem value="status">Status</MenuItem>
       </TextField>
     </Stack>
-    <Typography variant="caption" color="text.secondary" display="block" mb={1.25} aria-live="polite">{filtered.length} de {integrations.length} sistemas · Saúde: sucesso dos checks em 24h</Typography>
+    <Typography variant="caption" color="text.secondary" display="block" mb={1.25} aria-live="polite">{filtered.length} de {integrations.length} sistemas · Saúde: sucesso das verificações em 24h</Typography>
     {filtered.length === 0 ? <Panel><ViewState kind="empty" title="Nenhuma integração encontrada" description="Ajuste a busca ou o filtro de status para encontrar um sistema." /></Panel> : table ?
       <Panel sx={{ overflow: 'hidden' }}><Table aria-label="Sistemas integrados" size="small" sx={{ tableLayout: 'fixed', '& td, & th': { borderColor: 'divider', px: 1.5, py: 1.75 }, '& th': { color: 'text.secondary', fontSize: '0.75rem' } }}>
         <TableHead><TableRow><TableCell sx={{ width: '28%' }}>Sistema</TableCell><TableCell sx={{ width: '19%' }}>Status</TableCell><TableCell sx={{ width: '16%' }}>Última sincronização</TableCell><TableCell sx={{ width: '11%' }}>Saúde</TableCell><TableCell sx={{ width: '12%' }}>Resposta</TableCell><TableCell sx={{ width: '14%' }}>Ações</TableCell></TableRow></TableHead>

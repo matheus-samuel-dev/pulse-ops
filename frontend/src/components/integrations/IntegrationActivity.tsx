@@ -15,7 +15,7 @@ export function IntegrationActivity({ id = null, revision = 0 }: { id?: string |
   if (!data && error) return <ViewState kind="error" title="Atividade indisponível" description={error} actionLabel="Tentar novamente" onAction={refresh} />;
   return <>
     {error && <Alert severity="warning" action={<Button color="inherit" onClick={refresh}>Atualizar</Button>}>Não foi possível atualizar os eventos.</Alert>}
-    {data?.length === 0 && <ViewState kind="empty" title="Nenhuma atividade recente" description="Checks e relatórios recebidos nos últimos 30 dias aparecerão aqui." />}
+    {data?.length === 0 && <ViewState kind="empty" title="Nenhuma atividade recente" description="Verificações e relatórios recebidos nos últimos 30 dias aparecerão aqui." />}
     <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
       {data?.map(event => {
         const Icon = event.type === 'QUALITY' ? DescriptionOutlinedIcon : event.impact === 'SUCCESS' ? CheckCircleOutlineRoundedIcon : ErrorOutlineRoundedIcon;

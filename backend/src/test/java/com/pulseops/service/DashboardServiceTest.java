@@ -107,8 +107,8 @@ class DashboardServiceTest {
         DashboardSummaryResponse result = dashboardService.summary("24h");
 
         assertThat(result.monitoredSystems()).isEqualTo(3);
-        assertThat(result.averageAvailability()).isEqualByComparingTo("75.00");
-        assertThat(result.availabilityChange()).isEqualByComparingTo("75.00");
+        assertThat(result.averageAvailability()).isNull();
+        assertThat(result.availabilityChange()).isNull();
         assertThat(result.openIncidents()).isEqualTo(2);
         assertThat(result.incidentChange()).isEqualTo(1);
         assertThat(result.averageCoverage()).isEqualByComparingTo("85.00");
@@ -143,11 +143,11 @@ class DashboardServiceTest {
 
         assertThat(result.period()).isEqualTo("24h");
         assertThat(result.monitoredSystems()).isZero();
-        assertThat(result.averageAvailability()).isEqualByComparingTo("0.00");
-        assertThat(result.averageCoverage()).isEqualByComparingTo("0.00");
+        assertThat(result.averageAvailability()).isNull();
+        assertThat(result.averageCoverage()).isNull();
         assertThat(result.deployments()).isZero();
         assertThat(result.openIncidents()).isZero();
-        assertThat(result.overallHealth()).isEqualTo("HEALTHY");
+        assertThat(result.overallHealth()).isEqualTo("UNKNOWN");
     }
 
     @Test
@@ -171,6 +171,7 @@ class DashboardServiceTest {
     @Test
     void shouldBucketHourlyLatencyAndCalculateAverageAndNearestRankP95() {
         MonitoredSystem system = system("Latency API", SystemStatus.OPERATIONAL);
+        when(systemRepository.findAll()).thenReturn(List.of(system));
         OffsetDateTime firstHour = NOW_AT_UTC.minusHours(5).truncatedTo(ChronoUnit.HOURS);
         OffsetDateTime secondHour = NOW_AT_UTC.minusHours(4).truncatedTo(ChronoUnit.HOURS);
         when(healthCheckRepository.findAllByCheckedAtBetweenOrderByCheckedAtAsc(any(), any()))
@@ -198,6 +199,7 @@ class DashboardServiceTest {
     @Test
     void shouldUseDailyBucketsForSevenAndThirtyDayPeriods() {
         MonitoredSystem system = system("Daily API", SystemStatus.OPERATIONAL);
+        when(systemRepository.findAll()).thenReturn(List.of(system));
         OffsetDateTime firstDay = NOW_AT_UTC.minusDays(2).truncatedTo(ChronoUnit.DAYS);
         when(healthCheckRepository.findAllByCheckedAtBetweenOrderByCheckedAtAsc(any(), any()))
                 .thenReturn(List.of(
@@ -255,12 +257,12 @@ class DashboardServiceTest {
 
         assertThat(result).extracting(SystemHealthResponse::name).containsExactly("alpha", "Zeta");
         SystemHealthResponse alphaHealth = result.getFirst();
-        assertThat(alphaHealth.uptime()).isEqualByComparingTo("66.67");
-        assertThat(alphaHealth.latencyMs()).isEqualTo(200);
+        assertThat(alphaHealth.uptime()).isNull();
+        assertThat(alphaHealth.latencyMs()).isNull();
         assertThat(alphaHealth.lastCheckedAt()).isEqualTo(latest.getCheckedAt());
         assertThat(alphaHealth.sparkline()).containsExactly(100L, 300L);
         SystemHealthResponse zetaHealth = result.getLast();
-        assertThat(zetaHealth.uptime()).isEqualByComparingTo("0.00");
+        assertThat(zetaHealth.uptime()).isNull();
         assertThat(zetaHealth.latencyMs()).isNull();
         assertThat(zetaHealth.lastCheckedAt()).isNull();
         assertThat(zetaHealth.sparkline()).isEmpty();

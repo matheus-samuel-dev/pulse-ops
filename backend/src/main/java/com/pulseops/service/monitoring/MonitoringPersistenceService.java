@@ -27,6 +27,9 @@ import java.util.UUID;
  */
 @Service
 public class MonitoringPersistenceService {
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.pulseops.service.EventRecorder events;
+
 
     private final MonitoredSystemRepository systemRepository;
     private final HealthCheckRepository healthCheckRepository;
@@ -50,23 +53,35 @@ public class MonitoringPersistenceService {
 
     @Transactional
     public HealthCheck record(MonitoredSystem probeTarget, HealthProbeResult probe) {
-        Objects.requireNonNull(probeTarget, "probe target is required");
-        Objects.requireNonNull(probe, "probe result is required");
+        Objects.requireNonNull(probeTarget, "probe target é obrigatório");
+        Objects.requireNonNull(probe, "probe result é obrigatório");
 
-        UUID systemId = Objects.requireNonNull(probeTarget.getId(), "probe target id is required");
+        UUID systemId = Objects.requireNonNull(probeTarget.getId(), "probe target id é obrigatório");
         MonitoredSystem persistedSystem = systemRepository.findByIdForUpdate(systemId)
                 .orElseThrow(() -> new ResourceNotFoundException("Monitored system", systemId));
-        if (!persistedSystem.isActive()) {
-            throw new BusinessRuleException("Inactive systems cannot be monitored");
+        if (!persistedSystem.isActive() || persistedSystem.isMaintenance()) {
+            throw new BusinessRuleException("Sistemas inativos não podem ser monitorados");
         }
 
+        if (!Objects.equals(persistedSystem.getBaseUrl(),probeTarget.getBaseUrl()) || !Objects.equals(persistedSystem.getHealthEndpoint(),probeTarget.getHealthEndpoint()) || persistedSystem.getExpectedStatusCode()!=probeTarget.getExpectedStatusCode() || persistedSystem.getTimeoutMs()!=probeTarget.getTimeoutMs() || persistedSystem.getLatencyThresholdMs()!=probeTarget.getLatencyThresholdMs() || persistedSystem.getEnvironment()!=probeTarget.getEnvironment()) throw new BusinessRuleException("A configuração mudou durante a verificação. O resultado antigo foi descartado.");
         List<HealthCheck> previousChecks = healthCheckRepository
                 .findTop10ByMonitoredSystemIdOrderByCheckedAtDesc(systemId);
         MonitoringDecision decision = statusEvaluator.evaluate(probeTarget, probe, previousChecks);
 
         HealthCheck persistedCheck = healthCheckRepository.save(toHealthCheck(persistedSystem, probe, decision));
+        com.pulseops.domain.system.SystemStatus previousStatus = persistedSystem.getStatus();
         persistedSystem.setStatus(decision.status());
+        persistedSystem.setStatusReason(decision.reason());
+        if (previousStatus != decision.status()) persistedSystem.setStatusChangedAt(persistedCheck.getCheckedAt());
+        if (!decision.successful()) persistedSystem.setLastFailureAt(persistedCheck.getCheckedAt());
         systemRepository.save(persistedSystem);
+        if (events != null) {
+            events.recordResource(persistedSystem, "HEALTH_CHECK", decision.successful() ? "SUCCESS" : "WARNING", "Verificação executada", probe.httpStatus()==null ? decision.reason() : "HTTP "+probe.httpStatus()+" · "+probe.responseTimeMs()+" ms · "+decision.reason(), "Monitoramento PulseOps",persistedCheck.getId(),decision.successful() ? "SUCCESS" : "FAILED");
+            if (previousStatus != decision.status()) {
+                String type = decision.status() == com.pulseops.domain.system.SystemStatus.DOWN ? "SYSTEM_DOWN" : decision.status() == com.pulseops.domain.system.SystemStatus.OPERATIONAL ? previousStatus == com.pulseops.domain.system.SystemStatus.UNKNOWN ? "SYSTEM_OPERATIONAL" : "SYSTEM_RECOVERED" : decision.status()==com.pulseops.domain.system.SystemStatus.CONFIGURATION_REQUIRED ? "SYSTEM_CONFIGURATION_REQUIRED" : "SYSTEM_DEGRADED";
+                events.record(persistedSystem, type, type.equals("SYSTEM_DOWN") ? "CRITICAL" : type.equals("SYSTEM_RECOVERED") ? "SUCCESS" : "WARNING", "Estado do sistema alterado", decision.reason(), "Monitoramento PulseOps");
+            }
+        }
         incidentAutomationService.evaluate(persistedSystem, persistedCheck, decision, previousChecks);
         return persistedCheck;
     }
@@ -82,14 +97,10 @@ public class MonitoringPersistenceService {
         check.setHttpStatus(probe.httpStatus());
         check.setResponseTimeMs(probe.responseTimeMs());
         check.setSuccess(decision.successful());
+        check.setFailureType(probe.failureType()!=com.pulseops.dto.monitoring.ProbeFailureType.NONE ? probe.failureType().name() : decision.successful() ? "NONE" : "HTTP_STATUS");
         check.setErrorMessage(decision.successful() ? null : errorMessage(probe, decision));
         return check;
     }
 
-    private String errorMessage(HealthProbeResult probe, MonitoringDecision decision) {
-        if (probe.errorMessage() == null || probe.errorMessage().isBlank()) {
-            return decision.reason();
-        }
-        return "%s: %s".formatted(decision.reason(), probe.errorMessage());
-    }
+    private String errorMessage(HealthProbeResult probe, MonitoringDecision decision) { return decision.reason(); }
 }

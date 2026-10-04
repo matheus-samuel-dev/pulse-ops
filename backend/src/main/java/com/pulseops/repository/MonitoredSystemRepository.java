@@ -14,14 +14,28 @@ import org.springframework.data.repository.query.Param;
 
 public interface MonitoredSystemRepository extends JpaRepository<MonitoredSystem, UUID> {
 
-    Optional<MonitoredSystem> findByNameIgnoreCase(String name);
+    @Override
+    @Query("select system from MonitoredSystem system where " + com.pulseops.security.AccountScope.SYSTEM)
+    List<MonitoredSystem> findAll();
+
+    @Override
+    @Query("select system from MonitoredSystem system where system.id = :id and " + com.pulseops.security.AccountScope.SYSTEM)
+    Optional<MonitoredSystem> findById(@Param("id") UUID id);
+
+    @Override
+    @Query("select (count(system) > 0) from MonitoredSystem system where system.id = :id and " + com.pulseops.security.AccountScope.SYSTEM)
+    boolean existsById(@Param("id") UUID id);
+
+    @Query("select system from MonitoredSystem system where lower(system.name) = lower(:name) and " + com.pulseops.security.AccountScope.SYSTEM)
+    Optional<MonitoredSystem> findByNameIgnoreCase(@Param("name") String name);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select system from MonitoredSystem system where system.id = :id")
+    @Query("select system from MonitoredSystem system where system.id = :id and " + com.pulseops.security.AccountScope.SYSTEM)
     Optional<MonitoredSystem> findByIdForUpdate(@Param("id") UUID id);
 
     boolean existsByNameIgnoreCase(String name);
 
+    @Query("select system from MonitoredSystem system where system.active = true and " + com.pulseops.security.AccountScope.SYSTEM + " order by system.name")
     List<MonitoredSystem> findAllByActiveTrueOrderByNameAsc();
 
     List<MonitoredSystem> findAllByEnvironmentAndActiveTrueOrderByNameAsc(Environment environment);

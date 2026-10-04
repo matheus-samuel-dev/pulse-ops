@@ -17,12 +17,13 @@ public record IncidentResponse(
         OffsetDateTime startedAt,
         OffsetDateTime resolvedAt,
         boolean automatic,
-        OffsetDateTime createdAt
+        OffsetDateTime createdAt,
+        OffsetDateTime investigatingAt
 ) {
     public static IncidentResponse from(Incident incident) {
         return new IncidentResponse(
                 incident.getId(), incident.getMonitoredSystem().getId(), incident.getMonitoredSystem().getName(),
                 incident.getTitle(), incident.getDescription(), incident.getSeverity(), incident.getStatus(),
-                incident.getStartedAt(), incident.getResolvedAt(), incident.isAutomatic(), incident.getCreatedAt());
+                incident.getStartedAt(), incident.getResolvedAt(), incident.isAutomatic(), incident.getCreatedAt(), incident.getInvestigatingAt());
     }
 }

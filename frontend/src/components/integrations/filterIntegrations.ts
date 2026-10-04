@@ -1,7 +1,7 @@
 import type { Integration, IntegrationStatus } from '../../types/integrations';
 
 export type IntegrationSort = 'name' | 'sync' | 'health' | 'status';
-const statusOrder: Record<IntegrationStatus, number> = { OFFLINE: 0, ATTENTION: 1, ONLINE: 2, UNKNOWN: 3 };
+const statusOrder: Record<IntegrationStatus, number> = { NOT_CONFIGURED: 4, OFFLINE: 0, ATTENTION: 1, ONLINE: 2, UNKNOWN: 3 };
 
 export function filterIntegrations(integrations: Integration[], query: string, status: IntegrationStatus | 'ALL', sort: IntegrationSort) {
   const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();

@@ -24,6 +24,7 @@ public record QualityReportResponse(
         BigDecimal lineCoverage,
         BigDecimal branchCoverage,
         BigDecimal coverageScore,
-        QualityClassification classification
+        QualityClassification classification,
+        String source
 ) {
 }

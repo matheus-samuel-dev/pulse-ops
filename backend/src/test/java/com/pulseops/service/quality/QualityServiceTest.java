@@ -101,8 +101,8 @@ class QualityServiceTest {
                     report(0, 0, 0, 0, "100.00", "100.00"));
 
             assertThat(belowThreshold.classification()).isEqualTo(QualityClassification.CRITICAL);
-            assertThat(withoutTests.classification()).isEqualTo(QualityClassification.CRITICAL);
-            assertThat(withoutTests.passRate()).isEqualByComparingTo("0.00");
+            assertThat(withoutTests.classification()).isEqualTo(QualityClassification.NO_DATA);
+            assertThat(withoutTests.passRate()).isNull();
         }
 
         @Test
@@ -110,7 +110,7 @@ class QualityServiceTest {
             QualitySummary summary = qualityService.analyze(
                     report(3, 2, 1, 0, "92.00", "88.00"));
 
-            assertThat(summary.passRate()).isEqualByComparingTo("66.67");
+            assertThat(summary.passRate()).isEqualByComparingTo("66.667");
             assertThat(summary.coverageScore()).isEqualByComparingTo("90.40");
         }
     }
@@ -154,11 +154,11 @@ class QualityServiceTest {
             assertThatThrownBy(() -> qualityService.createReport(
                     UUID.randomUUID(), command(10, 8, 1, 0, "90", "80", NOW_OFFSET)))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("add up");
+                    .hasMessageContaining("soma");
             assertThatThrownBy(() -> qualityService.createReport(
                     UUID.randomUUID(), command(-1, -1, 0, 0, "90", "80", NOW_OFFSET)))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("negative");
+                    .hasMessageContaining("negativos");
 
             verifyNoInteractions(systemRepository, testReportRepository);
         }
@@ -169,15 +169,15 @@ class QualityServiceTest {
                     UUID.randomUUID(), new CreateTestReportCommand(
                             1, 1, 0, 0, null, BigDecimal.TEN, NOW_OFFSET)))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("Line coverage");
+                    .hasMessageContaining("Cobertura de linhas");
             assertThatThrownBy(() -> qualityService.createReport(
                     UUID.randomUUID(), command(1, 1, 0, 0, "101", "80", NOW_OFFSET)))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("between 0 and 100");
+                    .hasMessageContaining("entre 0 e 100");
             assertThatThrownBy(() -> qualityService.createReport(
                     UUID.randomUUID(), command(1, 1, 0, 0, "90", "80", NOW_OFFSET.plusNanos(1))))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("future");
+                    .hasMessageContaining("futuro");
 
             verify(testReportRepository, never()).save(any());
             verifyNoInteractions(systemRepository);
@@ -222,10 +222,10 @@ class QualityServiceTest {
 
         assertThatThrownBy(() -> qualityService.getLatest(unknownSystem))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Monitored system");
+                .hasMessageContaining("Sistema");
         assertThatThrownBy(() -> qualityService.getLatest(systemWithoutReport))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Test report");
+                .hasMessageContaining("Relatório de testes");
 
         verify(testReportRepository, never())
                 .findFirstByMonitoredSystemIdOrderByGeneratedAtDesc(unknownSystem);
@@ -246,9 +246,9 @@ class QualityServiceTest {
                     playSpace, NOW_OFFSET.minusHours(1), 100, 100, 0, 0, "92", "88");
             TestReport latestLogiTrack = report(
                     logiTrack, NOW_OFFSET.minusHours(2), 200, 190, 5, 5, "82", "72");
-            when(systemRepository.findAllByActiveTrueOrderByNameAsc())
+            when(systemRepository.findAll())
                     .thenReturn(List.of(withoutReport, logiTrack, playSpace));
-            when(testReportRepository.findAllForActiveSystemsOrderedBySystemAndGeneratedAt())
+            when(testReportRepository.findAll())
                     .thenReturn(List.of(oldPlaySpace, latestLogiTrack, latestPlaySpace));
 
             QualityOverviewResponse overview = qualityService.getOverview();
@@ -260,7 +260,7 @@ class QualityServiceTest {
             assertThat(overview.passedTests()).isEqualTo(290);
             assertThat(overview.failedTests()).isEqualTo(5);
             assertThat(overview.skippedTests()).isEqualTo(5);
-            assertThat(overview.passRate()).isEqualByComparingTo("96.67");
+            assertThat(overview.passRate()).isEqualByComparingTo("96.667");
             assertThat(overview.averageLineCoverage()).isEqualByComparingTo("87.00");
             assertThat(overview.averageBranchCoverage()).isEqualByComparingTo("80.00");
             assertThat(overview.averageCoverageScore()).isEqualByComparingTo("84.20");
@@ -273,9 +273,9 @@ class QualityServiceTest {
 
         @Test
         void shouldReturnExplicitEmptyOverviewWhenActiveSystemsHaveNoReports() {
-            when(systemRepository.findAllByActiveTrueOrderByNameAsc())
+            when(systemRepository.findAll())
                     .thenReturn(List.of(system("Gestão Financeira", true)));
-            when(testReportRepository.findAllForActiveSystemsOrderedBySystemAndGeneratedAt())
+            when(testReportRepository.findAll())
                     .thenReturn(List.of());
 
             QualityOverviewResponse overview = qualityService.getOverview();
@@ -284,9 +284,9 @@ class QualityServiceTest {
             assertThat(overview.systemsWithReports()).isZero();
             assertThat(overview.systemsWithoutReports()).isOne();
             assertThat(overview.totalTests()).isZero();
-            assertThat(overview.passRate()).isEqualByComparingTo("0.00");
-            assertThat(overview.averageLineCoverage()).isEqualByComparingTo("0.00");
-            assertThat(overview.classification()).isEqualTo(QualityClassification.CRITICAL);
+            assertThat(overview.passRate()).isNull();
+            assertThat(overview.averageLineCoverage()).isNull();
+            assertThat(overview.classification()).isEqualTo(QualityClassification.NO_DATA);
             assertThat(overview.systems()).isEmpty();
         }
     }
@@ -347,7 +347,7 @@ class QualityServiceTest {
                     .hasMessageContaining(unknownSystem.toString());
             assertThatThrownBy(() -> qualityService.getHistory(null, "90d"))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("24h, 7d, 30d or all");
+                    .hasMessageContaining("24h, 7d, 30d ou all");
 
             verifyNoInteractions(testReportRepository);
         }
